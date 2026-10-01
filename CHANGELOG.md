@@ -5,6 +5,18 @@ matching the pushed tag as that GitHub release's notes, so add an entry here bef
 
 ## Unreleased
 
+## 0.2.0
+
+First release of Lucy's fork, based on the original plugin's 0.1.12 by Kyle McDonald.
+
+- **Text formatting toolbar in comments:** select text in a comment box to apply bold, italic, underline, strikethrough, text color, or highlight.
+- **Highlight colors:** theme default or 9 Notion-style colors, an intensity slider, and custom hex values per color for light and dark themes.
+- **Annotation style:** mark commented text with a filled highlight or a quiet underline.
+- **Per-comment overrides:** change a single comment's color or style from its **⋯** menu.
+- **Show floating button** setting: a comment button next to selected text. Also works with [Notion Selection Toolbar](https://github.com/jiwooroh/notion-selection-toolbar)'s **Comment** button.
+- **Narrow window layout:** when the margin doesn't fit, cards hide and appear on hover.
+- Comment boxes grow as you type, long comments clamp with a "more" link, and clicking your own comment text edits it.
+
 ## 0.1.12
 
 - Added an **Allow empty comments** setting. An empty comment highlights its selected text and shows an editable **Empty** card. Run **Add comment** on the same text to add text or delete the comment ([#52](https://github.com/kylemcd/obsidian-document-comments/issues/52)).
