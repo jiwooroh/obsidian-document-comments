@@ -33,13 +33,15 @@ Choose how commented text is marked in your notes.
 - **Annotation style**: mark commented text with a filled highlight (the original look) or a quiet underline with no fill.
 - Use a comment's **⋯** menu to change the color or style of that single comment.
 
-![Per-comment color and style menu](docs/screenshots/comment-menu.png)
+![Per-comment color and style menu](docs/screenshots/comment-menu.webp)
 
-### Floating comment button
+### Comment from a selection toolbar
 
-Turn on **Show floating button** to get a comment button next to any text you select. Off by default.
+Pair this fork with [Notion Selection Toolbar](https://github.com/jiwooroh/notion-selection-toolbar), another plugin of mine. Select text in a note and choose **Comment** from its floating toolbar to start a comment.
 
-![Floating comment button](docs/screenshots/floating-button.png)
+![Comment button in Notion Selection Toolbar](docs/screenshots/selection-toolbar.png)
+
+If you don't use that plugin, turn on **Show floating button** in this plugin's settings. A small comment button then appears next to any text you select. It is off by default.
 
 ### Narrow window layout
 
