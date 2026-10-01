@@ -1,16 +1,59 @@
-# Document Comments
+# Document Comments (Lucy's fork)
 
-> **Fork notice:** This is a fork of [kylemcd/obsidian-document-comments](https://github.com/kylemcd/obsidian-document-comments) by **Kyle McDonald**, with additional changes by Lucy Roh (text formatting toolbar, highlight colors, floating button, and more). The original work is used under the MIT License; see [LICENSE](LICENSE).
+> This is a fork of [kylemcd/obsidian-document-comments](https://github.com/kylemcd/obsidian-document-comments) by **Kyle McDonald**. All credit for the original plugin goes to the original author. This fork adds the features listed below. The original work is used under the MIT License; see [LICENSE](LICENSE).
 
 Document Comments adds inline comments to Obsidian notes. It shows each comment as a card beside the text on desktop.
 
 The plugin stores each comment inside its Markdown file as an HTML comment. Other editors, version control tools, and agents can read the comment.
 
-[Install Document Comments from the Obsidian community plugin directory](https://community.obsidian.md/plugins/document-comments).
+## What this fork adds
 
-![Document Comments with threaded comment cards beside an Obsidian note](screenshot.png)
+### Text formatting toolbar in comments
 
-## Features
+Select text while you write or edit a comment, and a small toolbar appears above the comment box:
+
+- **B** / *I* / <u>U</u> / ~~S~~: bold, italic, underline, strikethrough
+- Text color
+- Highlight color
+
+![Text formatting toolbar](docs/screenshots/text-toolbar.png)
+
+### Highlight colors
+
+Choose how commented text is marked in your notes.
+
+- **Highlight color**: theme default or one of 9 Notion-style colors (yellow, green, blue, purple, pink, red, orange, brown, gray).
+- **Highlight intensity**: a slider that makes every color paler or bolder.
+- **Custom colors**: pick your own hex value for each color, separately for light and dark themes.
+
+![Highlight color settings](docs/screenshots/highlight-settings.png)
+
+### Underline style and per-comment overrides
+
+- **Annotation style**: mark commented text with a filled highlight (the original look) or a quiet underline with no fill.
+- Use a comment's **⋯** menu to change the color or style of that single comment.
+
+![Per-comment color and style menu](docs/screenshots/comment-menu.png)
+
+### Floating comment button
+
+Turn on **Show floating button** to get a comment button next to any text you select. Off by default.
+
+![Floating comment button](docs/screenshots/floating-button.png)
+
+### Narrow window layout
+
+When the window is too narrow for the margin, comment cards hide and appear when you hover over the highlighted text, so the note keeps its full width.
+
+![Narrow window layout](docs/screenshots/narrow-layout.png)
+
+### Smaller touches
+
+- Comment boxes grow as you type.
+- Long comments are clamped with a "more" link.
+- Click your own comment text to edit it.
+
+## Original features
 
 ### Comments and storage
 
@@ -60,6 +103,8 @@ Document Comments requires Obsidian 1.7.2 or newer. It supports desktop and mobi
 
 ### Community plugins
 
+The community plugin directory installs the **original** plugin, without this fork's features. To get this fork, use BRAT, a manual install, or build from source.
+
 Use the [Document Comments plugin page](https://community.obsidian.md/plugins/document-comments), or install it from Obsidian:
 
 1. Open **Settings → Community plugins**.
@@ -75,14 +120,14 @@ Use BRAT to install a pre-release build:
 1. Install **BRAT** from Community plugins.
 2. Enable **BRAT**.
 3. Run **BRAT: Add a beta plugin for testing**.
-4. Enter `kylemcd/obsidian-document-comments`.
+4. Enter `jiwooroh/obsidian-document-comments`.
 5. Enable **Document Comments** in Community plugins.
 
 BRAT installs the latest GitHub release and checks for updates.
 
 ### Manual install
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/kylemcd/obsidian-document-comments/releases).
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/jiwooroh/obsidian-document-comments/releases).
 2. Copy the files to `<your-vault>/.obsidian/plugins/document-comments/`.
 3. Restart or reload Obsidian.
 4. Enable **Document Comments** in Community plugins.
@@ -92,7 +137,7 @@ Create the `document-comments` directory if it does not exist.
 ### Build from source
 
 ```bash
-git clone https://github.com/kylemcd/obsidian-document-comments
+git clone https://github.com/jiwooroh/obsidian-document-comments
 cd obsidian-document-comments
 npm install
 npm run build
