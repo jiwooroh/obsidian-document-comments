@@ -11,7 +11,9 @@ import {
 	computeDeleteComment,
 	computeDeleteEntry,
 	computeEditEntry,
+	computeSetColor,
 	computeSetResolved,
+	computeSetStyle,
 	computeToggleReaction,
 } from "../editor/edits";
 import { applyCommentEdit, editorViewForFile } from "../editor/routing";
@@ -77,6 +79,8 @@ export class CommentsSidebarView extends ItemView {
 					}),
 				),
 			setResolved: (id, resolved) => void this.edit((doc) => computeSetResolved(doc, id, resolved)),
+			setColor: (id, colorId) => void this.edit((doc) => computeSetColor(doc, id, colorId)),
+			setStyle: (id, styleId) => void this.edit((doc) => computeSetStyle(doc, id, styleId)),
 			remove: (id) => void this.edit((doc) => computeDeleteComment(doc, id)),
 			editEntry: (id, index, text) => void this.edit((doc) => computeEditEntry(doc, id, index, text)),
 			deleteEntry: (id, index) => void this.edit((doc) => computeDeleteEntry(doc, id, index)),

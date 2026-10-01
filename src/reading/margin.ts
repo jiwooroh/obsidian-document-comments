@@ -10,13 +10,16 @@ import {
 	computeDeleteComment,
 	computeDeleteEntry,
 	computeEditEntry,
+	computeSetColor,
 	computeSetResolved,
+	computeSetStyle,
 	computeToggleReaction,
 } from "../editor/edits";
 import { applyCommentEdit, insertComment as routeInsertComment } from "../editor/routing";
 import { closestSpanId, spanSelector } from "../util/css";
+import { isNarrowForMargin } from "../util/narrow";
 import { stackTops } from "../ui/stack";
-import { CARD_GAP, FLASH_MS } from "../ui/constants";
+import { CARD_GAP, DRAFT_LIFT_PX, FLASH_MS } from "../ui/constants";
 import { buildDraftComposer } from "../ui/draft-composer";
 import { EmptySubmitAction } from "../ui/draft-behavior";
 
@@ -47,6 +50,7 @@ class ReadingMargin {
 	private draftTargetHighlightId: string | undefined;
 	private draftEl: HTMLElement | null = null;
 	private draftAnchor: HTMLElement | null = null;
+	private draftOutside: ((e: MouseEvent) => void) | null = null;
 	private cb: CardCallbacks;
 	private scrollHandler = () => this.position();
 	private resizeObserver: ResizeObserver;
@@ -77,6 +81,8 @@ class ReadingMargin {
 					}),
 				),
 			setResolved: (id, resolved) => void this.edit((doc) => computeSetResolved(doc, id, resolved)),
+			setColor: (id, colorId) => void this.edit((doc) => computeSetColor(doc, id, colorId)),
+			setStyle: (id, styleId) => void this.edit((doc) => computeSetStyle(doc, id, styleId)),
 			remove: (id) => void this.edit((doc) => computeDeleteComment(doc, id)),
 			editEntry: (id, index, text) => void this.edit((doc) => computeEditEntry(doc, id, index, text)),
 			deleteEntry: (id, index) => void this.edit((doc) => computeDeleteEntry(doc, id, index)),
@@ -176,6 +182,9 @@ class ReadingMargin {
 		// Highlights follow the master toggle alone, so they persist while the
 		// sidebar panel hosts the cards (dc-has is off, dc-highlights stays on).
 		this.readingView.toggleClass("dc-highlights", this.deps.showComments());
+		// Too narrow for the text column and the margin to coexist — stop reserving
+		// space for the column and let cards hide until their anchor is hovered.
+		this.readingView.toggleClass("dc-narrow", isNarrowForMargin(this.scroller));
 		const topRef = this.readingView.getBoundingClientRect().top;
 		// Gather geometry (reads) first, then write every top in one pass — cards are
 		// absolutely positioned, so a top write can't change any height.
@@ -190,16 +199,23 @@ class ReadingMargin {
 			}
 			card.el.removeClass("dc-offscreen");
 			if (card.el.offsetHeight === 0) continue;
+			// Center the card's own height on the anchor span, rather than starting
+			// flush with its top — a stable target since the card's height doesn't
+			// change while it's just sitting there (unlike the draft below, which
+			// grows as you type, so it uses a fixed lift instead of centering).
+			const spanRect = span.getBoundingClientRect();
+			const anchorMid = (spanRect.top + spanRect.bottom) / 2 - topRef;
 			placements.push({
 				el: card.el,
-				top: span.getBoundingClientRect().top - topRef,
+				top: anchorMid - card.el.offsetHeight / 2,
 				height: card.el.offsetHeight,
 			});
 		}
 		if (this.draftEl && this.draftAnchor) {
+			// Nudged up a bit vs. a resting card — see DRAFT_LIFT_PX.
 			placements.push({
 				el: this.draftEl,
-				top: this.draftAnchor.getBoundingClientRect().top - topRef,
+				top: this.draftAnchor.getBoundingClientRect().top - topRef - DRAFT_LIFT_PX,
 				height: this.draftEl.offsetHeight,
 			});
 		}
@@ -238,6 +254,17 @@ class ReadingMargin {
 			const ta = this.draftEl?.querySelector("textarea");
 			if (ta instanceof HTMLTextAreaElement) ta.focus();
 		}, 0);
+		// Clicking anywhere outside the composer exits commenting — but only when
+		// there's nothing typed yet. Discarding whatever you were writing just
+		// because a click landed elsewhere would lose it with no way back; Escape
+		// remains the explicit way to cancel a non-empty draft.
+		this.draftOutside = (e: MouseEvent) => {
+			if (!this.draftEl || this.draftEl.contains(e.target as Node)) return;
+			const ta = this.draftEl.querySelector("textarea");
+			if (ta instanceof HTMLTextAreaElement && (ta.disabled || ta.value.trim().length > 0)) return;
+			this.clearDraft();
+		};
+		this.readingView.ownerDocument.addEventListener("mousedown", this.draftOutside, true);
 	}
 
 	private buildDraftEl(): HTMLElement {
@@ -289,6 +316,10 @@ class ReadingMargin {
 	}
 
 	private clearDraft(): void {
+		if (this.draftOutside) {
+			this.readingView.ownerDocument.removeEventListener("mousedown", this.draftOutside, true);
+			this.draftOutside = null;
+		}
 		if (this.draftAnchor) {
 			// Unwrap the temp highlight span, restoring the original text nodes.
 			const parent = this.draftAnchor.parentNode;

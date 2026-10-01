@@ -1,5 +1,13 @@
-import { App, PluginSettingTab, Setting, type SettingDefinitionItem } from "obsidian";
+import { App, PluginSettingTab, Setting, type SettingDefinitionItem, type SettingGroupItem } from "obsidian";
 import type DocCommentsPlugin from "./main";
+import {
+	ANNOTATION_STYLES,
+	CUSTOMIZABLE_HIGHLIGHT_COLORS,
+	DEFAULT_ANNOTATION_STYLE,
+	DEFAULT_HIGHLIGHT_COLOR,
+	DEFAULT_HIGHLIGHT_INTENSITY,
+	HIGHLIGHT_COLORS,
+} from "./ui/highlight-colors";
 
 export type DocCommentsSettings = {
 	/** Author handle attached to comments you create. Empty falls back to "me". */
@@ -10,6 +18,20 @@ export type DocCommentsSettings = {
 	showResolved: boolean;
 	/** Allow a blank comment to persist with an empty comment card. */
 	allowEmptyComments: boolean;
+	/** Show a floating button on text selection. */
+	showFloatingButton: boolean;
+	/** Palette id (see highlight-colors.ts) for the in-text comment highlight. */
+	highlightColor: string;
+	/** % of each color's own tone mixed into its pale base — shared by all 9. */
+	highlightIntensity: number;
+	/** Hand-picked hex overrides keyed by color id, replacing the
+	 *  intensity-derived default for that one color. Separate per theme. */
+	highlightColorsLight: Record<string, string>;
+	highlightColorsDark: Record<string, string>;
+	/** How a comment's anchor is marked in the text: "highlight" (filled
+	 *  background, the original look) or "underline" (just the quiet
+	 *  underline, no fill). See ui/highlight-colors.ts. */
+	annotationStyle: string;
 };
 
 export const DEFAULT_SETTINGS: DocCommentsSettings = {
@@ -17,23 +39,44 @@ export const DEFAULT_SETTINGS: DocCommentsSettings = {
 	showComments: true,
 	showResolved: false,
 	allowEmptyComments: false,
+	showFloatingButton: false,
+	highlightColor: DEFAULT_HIGHLIGHT_COLOR,
+	highlightIntensity: DEFAULT_HIGHLIGHT_INTENSITY,
+	highlightColorsLight: {},
+	highlightColorsDark: {},
+	annotationStyle: DEFAULT_ANNOTATION_STYLE,
 };
 
 type DocCommentsSettingKey = keyof DocCommentsSettings;
+/** Excludes the two `Record<string, string>` settings (custom color maps,
+ *  handled separately via buildColorRow) — SETTING_META's generic text/
+ *  dropdown/slider/toggle rendering only ever stringifies string/number/
+ *  boolean values, and this keeps the type checker able to confirm that
+ *  instead of silently risking "[object Object]". */
+type StringSettingKey = Exclude<DocCommentsSettingKey, "highlightColorsLight" | "highlightColorsDark">;
 
 type TextControl = { type: "text"; placeholder: string };
 type ToggleControl = { type: "toggle" };
+type DropdownControl = { type: "dropdown"; options: Record<string, string> };
+type SliderControl = { type: "slider"; min: number; max: number; step: number };
+
+const HIGHLIGHT_COLOR_OPTIONS: Record<string, string> = Object.fromEntries(
+	HIGHLIGHT_COLORS.map((c) => [c.id, c.label]),
+);
+const ANNOTATION_STYLE_OPTIONS: Record<string, string> = Object.fromEntries(
+	ANNOTATION_STYLES.map((s) => [s.id, s.label]),
+);
 
 /** Single source of truth for each setting's copy and control. Both the
  *  declarative `getSettingDefinitions()` API (newer Obsidian) and the imperative
  *  `display()` fallback (older Obsidian) render from this, so their labels and
  *  defaults can't drift apart. */
 const SETTING_META: ReadonlyArray<{
-	key: DocCommentsSettingKey;
+	key: StringSettingKey;
 	name: string;
 	desc: string;
 	aliases: string[];
-	control: TextControl | ToggleControl;
+	control: TextControl | ToggleControl | DropdownControl | SliderControl;
 }> = [
 	{
 		key: "author",
@@ -63,6 +106,34 @@ const SETTING_META: ReadonlyArray<{
 		aliases: ["empty comments", "comment-free highlights"],
 		control: { type: "toggle" },
 	},
+	{
+		key: "showFloatingButton",
+		name: "Show floating button",
+		desc: "Show a floating comment button at the bottom-right of selected text.",
+		aliases: ["floating button", "selection button", "hover button"],
+		control: { type: "toggle" },
+	},
+	{
+		key: "annotationStyle",
+		name: "Annotation style",
+		desc: 'Default marking for commented text: a filled "Highlight" (the original look), or just a quiet "Underline" with no background fill. Any single comment can override this from its "..." menu → Change style.',
+		aliases: ["annotation", "underline", "highlight style", "comment marker"],
+		control: { type: "dropdown", options: ANNOTATION_STYLE_OPTIONS },
+	},
+	{
+		key: "highlightColor",
+		name: "Highlight color",
+		desc: "Color used to highlight commented text in your notes.",
+		aliases: ["comment color", "highlight", "comment highlight color"],
+		control: { type: "dropdown", options: HIGHLIGHT_COLOR_OPTIONS },
+	},
+	{
+		key: "highlightIntensity",
+		name: "Highlight intensity",
+		desc: "How strongly each highlight color's own tone shows through its pale base — higher is bolder/more saturated.",
+		aliases: ["highlight opacity", "highlight strength", "highlight saturation"],
+		control: { type: "slider", min: 0, max: 40, step: 1 },
+	},
 ];
 
 export class DocCommentsSettingTab extends PluginSettingTab {
@@ -74,24 +145,86 @@ export class DocCommentsSettingTab extends PluginSettingTab {
 	}
 
 	getSettingDefinitions(): SettingDefinitionItem<DocCommentsSettingKey>[] {
-		return SETTING_META.map((meta) => ({
-			name: meta.name,
-			desc: meta.desc,
-			aliases: meta.aliases,
-			control:
-				meta.control.type === "text"
-					? {
-							type: "text",
-							key: meta.key,
-							defaultValue: DEFAULT_SETTINGS[meta.key] as string,
-							placeholder: meta.control.placeholder,
-						}
-					: { type: "toggle", key: meta.key, defaultValue: DEFAULT_SETTINGS[meta.key] as boolean },
-		}));
+		const items: SettingDefinitionItem<DocCommentsSettingKey>[] = SETTING_META.map((meta) => {
+			if (meta.control.type === "text") {
+				return {
+					name: meta.name,
+					desc: meta.desc,
+					aliases: meta.aliases,
+					control: {
+						type: "text",
+						key: meta.key,
+						defaultValue: DEFAULT_SETTINGS[meta.key] as string,
+						placeholder: meta.control.placeholder,
+					},
+				};
+			}
+			if (meta.control.type === "dropdown") {
+				return {
+					name: meta.name,
+					desc: meta.desc,
+					aliases: meta.aliases,
+					control: {
+						type: "dropdown",
+						key: meta.key,
+						defaultValue: DEFAULT_SETTINGS[meta.key] as string,
+						options: meta.control.options,
+					},
+				};
+			}
+			if (meta.control.type === "slider") {
+				return {
+					name: meta.name,
+					desc: meta.desc,
+					aliases: meta.aliases,
+					control: {
+						type: "slider",
+						key: meta.key,
+						defaultValue: DEFAULT_SETTINGS[meta.key] as number,
+						min: meta.control.min,
+						max: meta.control.max,
+						step: meta.control.step,
+					},
+				};
+			}
+			return {
+				name: meta.name,
+				desc: meta.desc,
+				aliases: meta.aliases,
+				control: { type: "toggle", key: meta.key, defaultValue: DEFAULT_SETTINGS[meta.key] as boolean },
+			};
+		});
+		// One SettingDefinitionRender item per color: its `render(setting)` callback
+		// decorates the ONE row Obsidian already created for that item — the
+		// documented usage. (An earlier version tried to dynamically add MORE
+		// settings via the render callback's `group` param — that silently
+		// produced nothing but the item's own heading, so don't do that again.)
+		const colorRow = (
+			theme: "light" | "dark",
+			c: { id: string; label: string },
+		): SettingGroupItem<DocCommentsSettingKey> => ({
+			name: c.label,
+			render: (setting) => this.buildColorRow(setting, theme, c),
+		});
+		// SettingGroupItem doesn't allow a nested group inside another group's
+		// `items` (only definitions/pages) — so "Custom highlight colors" as one
+		// wrapping group containing "Light"/"Dark" sub-groups isn't representable.
+		// Two flat top-level groups instead.
+		items.push({
+			type: "group",
+			heading: "Custom highlight colors — light theme",
+			items: CUSTOMIZABLE_HIGHLIGHT_COLORS.map((c) => colorRow("light", c)),
+		});
+		items.push({
+			type: "group",
+			heading: "Custom highlight colors — dark theme",
+			items: CUSTOMIZABLE_HIGHLIGHT_COLORS.map((c) => colorRow("dark", c)),
+		});
+		return items;
 	}
 
 	async setControlValue(key: string, value: unknown): Promise<void> {
-		await this.applySetting(key as DocCommentsSettingKey, value);
+		await this.applySetting(key as StringSettingKey, value);
 	}
 
 	display(): void {
@@ -107,6 +240,23 @@ export class DocCommentsSettingTab extends PluginSettingTab {
 						.setValue(String(this.plugin.settings[meta.key]))
 						.onChange((value) => void this.applySetting(meta.key, value)),
 				);
+			} else if (meta.control.type === "dropdown") {
+				const options = meta.control.options;
+				setting.addDropdown((dropdown) =>
+					dropdown
+						.addOptions(options)
+						.setValue(String(this.plugin.settings[meta.key]))
+						.onChange((value) => void this.applySetting(meta.key, value)),
+				);
+			} else if (meta.control.type === "slider") {
+				const { min, max, step } = meta.control;
+				setting.addSlider((slider) =>
+					slider
+						.setLimits(min, max, step)
+						.setValue(Number(this.plugin.settings[meta.key]))
+						.setDynamicTooltip()
+						.onChange((value) => void this.applySetting(meta.key, value)),
+				);
 			} else {
 				setting.addToggle((toggle) =>
 					toggle
@@ -115,17 +265,65 @@ export class DocCommentsSettingTab extends PluginSettingTab {
 				);
 			}
 		}
+
+		new Setting(containerEl)
+			.setName("Custom highlight colors")
+			.setDesc(
+				"Override any color's exact hex value, separately for light and dark mode. Reset a color to go back to the intensity-derived default.",
+			)
+			.setHeading();
+		new Setting(containerEl).setName("Light theme").setHeading();
+		for (const c of CUSTOMIZABLE_HIGHLIGHT_COLORS) this.buildColorRow(new Setting(containerEl), "light", c);
+		new Setting(containerEl).setName("Dark theme").setHeading();
+		for (const c of CUSTOMIZABLE_HIGHLIGHT_COLORS) this.buildColorRow(new Setting(containerEl), "dark", c);
+	}
+
+	/** One color-picker + reset row, shared by both the declarative render item
+	 *  and the imperative display() path so they can't drift apart. */
+	private buildColorRow(setting: Setting, theme: "light" | "dark", c: { id: string; label: string }): void {
+		const key = theme === "light" ? "highlightColorsLight" : "highlightColorsDark";
+		const current = this.plugin.settings[key][c.id];
+		setting.setName(c.label);
+		setting.addColorPicker((picker) => {
+			if (current) picker.setValue(current);
+			picker.onChange((value) => void this.setCustomColor(key, c.id, value));
+		});
+		setting.addExtraButton((btn) =>
+			btn
+				.setIcon("rotate-ccw")
+				.setTooltip("Reset to default")
+				.onClick(() => void this.setCustomColor(key, c.id, undefined)),
+		);
+	}
+
+	private async setCustomColor(
+		key: "highlightColorsLight" | "highlightColorsDark",
+		id: string,
+		value: string | undefined,
+	): Promise<void> {
+		const next = { ...this.plugin.settings[key] };
+		if (value) next[id] = value;
+		else delete next[id];
+		this.plugin.settings[key] = next;
+		await this.plugin.saveSettings();
+		this.plugin.refreshHighlightColor();
 	}
 
 	/** Persist one setting and run its side effects (editor refresh, ribbon sync).
 	 *  Shared by both the declarative and imperative settings paths. */
-	private async applySetting(key: DocCommentsSettingKey, value: unknown): Promise<void> {
+	private async applySetting(key: StringSettingKey, value: unknown): Promise<void> {
 		if (key === "author") this.plugin.settings.author = String(value);
 		else if (key === "showComments") this.plugin.settings.showComments = Boolean(value);
 		else if (key === "showResolved") this.plugin.settings.showResolved = Boolean(value);
 		else if (key === "allowEmptyComments") this.plugin.settings.allowEmptyComments = Boolean(value);
+		else if (key === "showFloatingButton") this.plugin.settings.showFloatingButton = Boolean(value);
+		else if (key === "highlightColor") this.plugin.settings.highlightColor = String(value);
+		else if (key === "highlightIntensity") this.plugin.settings.highlightIntensity = Number(value);
+		else if (key === "annotationStyle") this.plugin.settings.annotationStyle = String(value);
 		await this.plugin.saveSettings();
-		if (key !== "author") this.plugin.refreshEditors();
+		const colorKeys: StringSettingKey[] = ["highlightColor", "highlightIntensity", "annotationStyle"];
+		if (colorKeys.includes(key)) this.plugin.refreshHighlightColor();
+		if (key !== "author" && !colorKeys.includes(key)) this.plugin.refreshEditors();
 		if (key === "showComments") this.plugin.updateRibbon();
 	}
 }

@@ -32,6 +32,9 @@ beforeAll(() => {
 		this.appendChild(el);
 		return el;
 	};
+	HTMLElement.prototype.setCssStyles = function (styles: Partial<CSSStyleDeclaration>) {
+		Object.assign(this.style, styles);
+	};
 });
 
 describe("draft composer", () => {

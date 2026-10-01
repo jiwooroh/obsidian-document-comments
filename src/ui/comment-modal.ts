@@ -43,10 +43,10 @@ export class CommentModal extends Modal {
 		input.addEventListener("input", () => {
 			this.value = input.value;
 		});
-		// Cmd/Ctrl+Enter submits; plain Enter inserts a newline (room to type freely
-		// on a small keyboard).
+		// Enter submits, Shift+Enter inserts a newline — same convention as every
+		// other comment composer in the plugin (the inline draft, replies, edits).
 		input.addEventListener("keydown", (e) => {
-			if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+			if (e.key === "Enter" && !e.shiftKey) {
 				e.preventDefault();
 				void this.submit();
 			}

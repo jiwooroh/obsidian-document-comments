@@ -74,6 +74,8 @@ export const parseComments = (doc: string): ParsedComment[] => {
 			status: data.status,
 			quote: data.quote,
 			codeLines: data.codeLines,
+			color: data.color,
+			style: data.style,
 			thread: data.thread,
 			reactions: data.reactions,
 			open: opens.get(id) ?? null,
@@ -138,6 +140,8 @@ const parseHeader = (header: string): Omit<CommentData, "thread" | "reactions"> 
 		status,
 		quote,
 		codeLines,
+		color: attrs.color,
+		style: attrs.style,
 	};
 };
 

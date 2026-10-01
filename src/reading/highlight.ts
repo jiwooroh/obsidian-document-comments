@@ -103,7 +103,8 @@ export const highlightPostProcessor = (el: HTMLElement, ctx: MarkdownPostProcess
 			const target = resolveCodeAnchor(text, c);
 			if (!target || target.from < sectionFrom || target.from >= sectionTo) continue;
 			for (const lineText of text.slice(target.from, target.to).split("\n")) {
-				if (lineText.trim()) wrapFirstMatch(el, lineText, c.id, c.status === "resolved", commentPreview(c));
+				if (lineText.trim())
+					wrapFirstMatch(el, lineText, c.id, c.status === "resolved", commentPreview(c), c.color, c.style);
 			}
 			continue;
 		}
@@ -117,10 +118,10 @@ export const highlightPostProcessor = (el: HTMLElement, ctx: MarkdownPostProcess
 		const codeText = inlineCodeText(quote);
 		if (codeText !== null) {
 			const code = inlineCodeElement(el, sectionSource, range.from - sectionFrom, codeText);
-			if (code) wrapFirstMatch(code, codeText, c.id, c.status === "resolved", preview);
+			if (code) wrapFirstMatch(code, codeText, c.id, c.status === "resolved", preview, c.color, c.style);
 			continue;
 		}
-		wrapFirstMatch(el, quote, c.id, c.status === "resolved", preview);
+		wrapFirstMatch(el, quote, c.id, c.status === "resolved", preview, c.color, c.style);
 	}
 };
 
@@ -339,6 +340,8 @@ const wrapFirstMatch = (
 	id: string,
 	resolved: boolean,
 	title: string | null,
+	color?: string,
+	style?: string,
 ): boolean => {
 	const doc = root.ownerDocument;
 	const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -349,9 +352,10 @@ const wrapFirstMatch = (
 			const range = doc.createRange();
 			range.setStart(node, idx);
 			range.setEnd(node, idx + needle.length);
-			const span = root.createSpan({
-				cls: resolved ? "doc-comment-span is-resolved" : "doc-comment-span",
-			});
+			let cls = resolved ? "doc-comment-span is-resolved" : "doc-comment-span";
+			if (color) cls += ` dc-color-${color}`;
+			if (style) cls += ` dc-style-${style}`;
+			const span = root.createSpan({ cls });
 			span.detach();
 			span.setAttribute("data-cid", id);
 			if (title) span.setAttribute("title", title);

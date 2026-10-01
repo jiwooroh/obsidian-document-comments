@@ -4,11 +4,130 @@
 /* On body so the variables reach both the editor and the reading view. */
 body {
 	--dc-margin-width: 320px;
+	/* Space actually reserved for the column in the text-width calc below. Equal
+	   to --dc-margin-width normally; zeroed under .dc-narrow so the text reclaims
+	   it — the column still renders at --dc-margin-width, just unreserved, so a
+	   hovered card floats over the text instead of the text making room for it. */
+	--dc-margin-reserve: var(--dc-margin-width);
 	--dc-card-pad: 16px;
 	--dc-card-gap: 8px;
-	--dc-highlight-bg: hsla(45, 90%, 50%, 0.18);
-	--dc-highlight-bg-active: hsla(45, 90%, 50%, 0.38);
-	--dc-highlight-border: hsla(45, 90%, 45%, 0.7);
+	/* Default selection: whatever the current theme uses for ==highlights==, so
+	   commented text matches the rest of the vault instead of diverging with a
+	   hardcoded color. Overridden inline on <body> when the user picks a
+	   specific color in settings (applyHighlightColor() in highlight-colors.ts)
+	   — kept as a var() reference rather than a resolved hex so it stays
+	   theme-aware automatically. */
+	--dc-highlight-bg: var(--dc-hl-theme);
+	--dc-highlight-bg-active: var(--dc-hl-theme-active);
+	--dc-highlight-border: var(--dc-hl-theme-border);
+	/* How much of each color's own tone mixes into its pale base (see the
+	   *-pale variables below) — 0% is the plain Notion pale wash, higher values
+	   read as a bolder/more saturated highlight. Overridden inline on <body> by
+	   the "Highlight intensity" slider in settings (applyHighlightIntensity()
+	   in highlight-colors.ts). */
+	--dc-highlight-intensity: 5%;
+}
+.cm-editor.dc-narrow,
+.markdown-reading-view.dc-narrow {
+	--dc-margin-reserve: 0px;
+}
+
+/* ── Highlight color palette (Notion's 9 colors) ──────────────────────────
+   Pick one in settings; --dc-highlight-* above just points at whichever id is
+   chosen, so switching the setting swaps these without touching the handful
+   of rules that actually paint the highlight. */
+:root {
+	/* Theme default — derived from Obsidian's own ==highlight== variable
+	   (--text-highlight-bg) rather than a hardcoded hex, so it automatically
+	   matches whatever the active theme (or a Style Settings override) uses
+	   elsewhere in the vault, in both light and dark. Border/active are mixed
+	   in from --text-normal since Obsidian doesn't expose those for its own
+	   highlight — no separate .theme-dark block needed, both anchors already
+	   flip with the theme. */
+	--dc-hl-theme: var(--text-highlight-bg);
+	--dc-hl-theme-border: color-mix(in srgb, var(--text-highlight-bg), var(--text-normal) 45%);
+	--dc-hl-theme-active: color-mix(in srgb, var(--text-highlight-bg), var(--text-normal) 20%);
+
+	/* Fixed, never-changing pale Notion wash for each color — the 0%-intensity
+	   anchor that --dc-hl-<id> below mixes the border tone into. Kept separate
+	   from --dc-hl-<id> itself so a user's custom hex override (set in
+	   settings) can replace just that computed result without needing to also
+	   know/preserve this base. */
+	--dc-hl-gray-pale: #F1F1EF;
+	--dc-hl-gray-border: #787774;
+	--dc-hl-brown-pale: #F3EEEE;
+	--dc-hl-brown-border: #976D57;
+	--dc-hl-orange-pale: #F8ECDF;
+	--dc-hl-orange-border: #CC782F;
+	--dc-hl-yellow-pale: #FAF3DD;
+	--dc-hl-yellow-border: #C29343;
+	--dc-hl-green-pale: #EEF3ED;
+	--dc-hl-green-border: #548164;
+	--dc-hl-blue-pale: #E9F3F7;
+	--dc-hl-blue-border: #487CA5;
+	--dc-hl-purple-pale: #F6F3F8;
+	--dc-hl-purple-border: #8A67AB;
+	--dc-hl-pink-pale: #F9F2F5;
+	--dc-hl-pink-border: #B35488;
+	--dc-hl-red-pale: #FAECEC;
+	--dc-hl-red-border: #C4554D;
+}
+/* The actual background each .dc-color-<id> / swatch uses: the pale base mixed
+   with this color's own tone, by --dc-highlight-intensity (settings slider,
+   default 5%). MUST live on `body` (where --dc-highlight-intensity is
+   declared above), not :root — a var() reference resolves using the SAME
+   element's cascaded value, and :root (html) can never see a variable only
+   set on its descendant body, however the intensity var got there (default or
+   the settings slider's inline override). Re-resolves live on every paint, so
+   dragging the slider updates already-applied highlights with no JS re-run
+   needed. A custom per-color hex from settings overrides this directly on
+   <body> instead (see applyCustomHighlightColors() in highlight-colors.ts),
+   skipping the mix entirely for that one color. One unconditional block
+   (no separate .theme-dark variant needed) since it just reads whichever
+   *-pale/*-border cascade already resolved to at body — light or dark. */
+body {
+	--dc-hl-gray: color-mix(in srgb, var(--dc-hl-gray-pale), var(--dc-hl-gray-border) var(--dc-highlight-intensity));
+	--dc-hl-brown: color-mix(in srgb, var(--dc-hl-brown-pale), var(--dc-hl-brown-border) var(--dc-highlight-intensity));
+	--dc-hl-orange: color-mix(in srgb, var(--dc-hl-orange-pale), var(--dc-hl-orange-border) var(--dc-highlight-intensity));
+	--dc-hl-yellow: color-mix(in srgb, var(--dc-hl-yellow-pale), var(--dc-hl-yellow-border) var(--dc-highlight-intensity));
+	--dc-hl-green: color-mix(in srgb, var(--dc-hl-green-pale), var(--dc-hl-green-border) var(--dc-highlight-intensity));
+	--dc-hl-blue: color-mix(in srgb, var(--dc-hl-blue-pale), var(--dc-hl-blue-border) var(--dc-highlight-intensity));
+	--dc-hl-purple: color-mix(in srgb, var(--dc-hl-purple-pale), var(--dc-hl-purple-border) var(--dc-highlight-intensity));
+	--dc-hl-pink: color-mix(in srgb, var(--dc-hl-pink-pale), var(--dc-hl-pink-border) var(--dc-highlight-intensity));
+	--dc-hl-red: color-mix(in srgb, var(--dc-hl-red-pale), var(--dc-hl-red-border) var(--dc-highlight-intensity));
+	/* Derived once per color: a stronger tone for the is-active / flash states,
+	   mixed from the same two anchors above so it can't drift out of sync with
+	   them. Also body-scoped for the same reason — it depends on --dc-hl-<id>
+	   above, which is itself body-scoped now. */
+	--dc-hl-gray-active: color-mix(in srgb, var(--dc-hl-gray), var(--dc-hl-gray-border) 35%);
+	--dc-hl-brown-active: color-mix(in srgb, var(--dc-hl-brown), var(--dc-hl-brown-border) 35%);
+	--dc-hl-orange-active: color-mix(in srgb, var(--dc-hl-orange), var(--dc-hl-orange-border) 35%);
+	--dc-hl-yellow-active: color-mix(in srgb, var(--dc-hl-yellow), var(--dc-hl-yellow-border) 35%);
+	--dc-hl-green-active: color-mix(in srgb, var(--dc-hl-green), var(--dc-hl-green-border) 35%);
+	--dc-hl-blue-active: color-mix(in srgb, var(--dc-hl-blue), var(--dc-hl-blue-border) 35%);
+	--dc-hl-purple-active: color-mix(in srgb, var(--dc-hl-purple), var(--dc-hl-purple-border) 35%);
+	--dc-hl-pink-active: color-mix(in srgb, var(--dc-hl-pink), var(--dc-hl-pink-border) 35%);
+	--dc-hl-red-active: color-mix(in srgb, var(--dc-hl-red), var(--dc-hl-red-border) 35%);
+}
+body.theme-dark {
+	--dc-hl-gray-pale: #252525;
+	--dc-hl-gray-border: #9B9B9B;
+	--dc-hl-brown-pale: #2E2724;
+	--dc-hl-brown-border: #A27763;
+	--dc-hl-orange-pale: #36291F;
+	--dc-hl-orange-border: #CB7B37;
+	--dc-hl-yellow-pale: #372E20;
+	--dc-hl-yellow-border: #C19138;
+	--dc-hl-green-pale: #242B26;
+	--dc-hl-green-border: #4F9768;
+	--dc-hl-blue-pale: #1F282D;
+	--dc-hl-blue-border: #447ACB;
+	--dc-hl-purple-pale: #2A2430;
+	--dc-hl-purple-border: #865DBB;
+	--dc-hl-pink-pale: #2E2328;
+	--dc-hl-pink-border: #BA4A78;
+	--dc-hl-red-pale: #332523;
+	--dc-hl-red-border: #BE524B;
 }
 
 /* Layout is keyed on a `dc-has` class set on the editor / reading-view container.
@@ -21,6 +140,11 @@ body {
 .cm-editor.dc-has {
 	position: relative;
 }
+.cm-editor.dc-has,
+.markdown-reading-view.dc-has {
+	--dc-sizer-width: min(var(--file-line-width, 50rem), calc(100% - var(--dc-margin-reserve)));
+	--dc-sizer-ml: max(0px, min(calc((100% - var(--file-line-width, 50rem)) / 2), calc(100% - var(--file-line-width, 50rem) - var(--dc-margin-reserve))));
+}
 
 /* Cap the body at its readable width and center the [text + column] block as a
    unit: an equal computed margin on the far left and to the right of the column.
@@ -28,8 +152,8 @@ body {
    readable-line-width rule (.markdown-source-view.mod-cm6.is-readable-line-width
    .cm-sizer, four classes) — five classes here win on specificity alone. */
 .markdown-source-view.mod-cm6 .cm-editor.dc-has .cm-sizer {
-	max-width: min(var(--file-line-width, 50rem), calc(100% - var(--dc-margin-width)));
-	margin-left: max(0px, calc((100% - var(--file-line-width, 50rem) - var(--dc-margin-width)) / 2));
+	max-width: var(--dc-sizer-width);
+	margin-left: var(--dc-sizer-ml);
 	margin-right: auto;
 }
 
@@ -45,19 +169,124 @@ body {
 	position: relative;
 }
 .markdown-reading-view.dc-has .markdown-preview-view .markdown-preview-sizer {
-	max-width: min(var(--file-line-width, 50rem), calc(100% - var(--dc-margin-width)));
-	margin-left: max(0px, calc((100% - var(--file-line-width, 50rem) - var(--dc-margin-width)) / 2));
+	max-width: var(--dc-sizer-width);
+	margin-left: var(--dc-sizer-ml);
 	margin-right: auto;
 }
 
-/* The highlighted span in the text. */
+/* The highlighted span in the text. Border color is blended toward
+   transparent (not the full-strength "-border" tone), closer to Notion's own
+   quiet comment-anchor mark. */
 .doc-comment-span {
 	background-color: var(--dc-highlight-bg);
-	border-bottom: 2px solid var(--dc-highlight-border);
+	border-bottom: 2px solid color-mix(in srgb, var(--dc-highlight-border) 55%, transparent);
 	border-radius: 2px;
 	cursor: text;
 	transition: background-color 120ms ease;
 }
+/* "Underline" annotation style (see applyAnnotationStyle in
+   highlight-colors.ts): drop the fill, keep the border-bottom. Placed before
+   is-active below so hovering still shows the momentary highlight color
+   regardless of mode — same specificity, source order decides. */
+body.dc-annotation-underline .doc-comment-span {
+	background-color: transparent;
+}
+/* Per-comment style override (the card's "Change style" menu item): forces this
+   ONE anchor to a highlight or underline regardless of the plugin-wide default
+   above. Needs the same `body` ancestor selector to match that rule's
+   specificity — placed after it, so source order decides in the override's
+   favor either way. Mirrors .dc-color-* below for per-comment color. */
+body .doc-comment-span.dc-style-highlight {
+	background-color: var(--dc-highlight-bg);
+}
+body .doc-comment-span.dc-style-underline {
+	background-color: transparent;
+}
+/* Per-comment color override (set via the card's "Change color" menu item):
+   re-point this ONE element's --dc-highlight-* at a specific palette entry.
+   Since .doc-comment-span above reads those through var(), a local override
+   here wins over the body-wide default without duplicating the color
+   properties themselves — is-active / is-resolved below still take effect on
+   top, unchanged. */
+.doc-comment-span.dc-color-theme {
+	--dc-highlight-bg: var(--dc-hl-theme);
+	--dc-highlight-bg-active: var(--dc-hl-theme-active);
+	--dc-highlight-border: var(--dc-hl-theme-border);
+}
+.doc-comment-span.dc-color-yellow {
+	--dc-highlight-bg: var(--dc-hl-yellow);
+	--dc-highlight-bg-active: var(--dc-hl-yellow-active);
+	--dc-highlight-border: var(--dc-hl-yellow-border);
+}
+.doc-comment-span.dc-color-green {
+	--dc-highlight-bg: var(--dc-hl-green);
+	--dc-highlight-bg-active: var(--dc-hl-green-active);
+	--dc-highlight-border: var(--dc-hl-green-border);
+}
+.doc-comment-span.dc-color-blue {
+	--dc-highlight-bg: var(--dc-hl-blue);
+	--dc-highlight-bg-active: var(--dc-hl-blue-active);
+	--dc-highlight-border: var(--dc-hl-blue-border);
+}
+.doc-comment-span.dc-color-purple {
+	--dc-highlight-bg: var(--dc-hl-purple);
+	--dc-highlight-bg-active: var(--dc-hl-purple-active);
+	--dc-highlight-border: var(--dc-hl-purple-border);
+}
+.doc-comment-span.dc-color-pink {
+	--dc-highlight-bg: var(--dc-hl-pink);
+	--dc-highlight-bg-active: var(--dc-hl-pink-active);
+	--dc-highlight-border: var(--dc-hl-pink-border);
+}
+.doc-comment-span.dc-color-red {
+	--dc-highlight-bg: var(--dc-hl-red);
+	--dc-highlight-bg-active: var(--dc-hl-red-active);
+	--dc-highlight-border: var(--dc-hl-red-border);
+}
+.doc-comment-span.dc-color-orange {
+	--dc-highlight-bg: var(--dc-hl-orange);
+	--dc-highlight-bg-active: var(--dc-hl-orange-active);
+	--dc-highlight-border: var(--dc-hl-orange-border);
+}
+.doc-comment-span.dc-color-brown {
+	--dc-highlight-bg: var(--dc-hl-brown);
+	--dc-highlight-bg-active: var(--dc-hl-brown-active);
+	--dc-highlight-border: var(--dc-hl-brown-border);
+}
+.doc-comment-span.dc-color-gray {
+	--dc-highlight-bg: var(--dc-hl-gray);
+	--dc-highlight-bg-active: var(--dc-hl-gray-active);
+	--dc-highlight-border: var(--dc-hl-gray-border);
+}
+
+/* ── Inline color/highlight INSIDE a comment's own text ───────────────────
+   Written by the mini text-format toolbar (ui/text-toolbar.ts) into a
+   comment's markdown as <span class="dc-fg-*">/<mark class="dc-mark-*">,
+   then rendered by MarkdownRenderer like any other raw inline HTML. Reuses
+   the same --dc-hl-* variables as the anchor-highlight palette above (the
+   "-border" tone already matches the sibling Notion Selection Toolbar
+   plugin's text-color hex values exactly) rather than defining a third copy
+   of the same 9 colors. */
+.dc-fg-gray { color: var(--dc-hl-gray-border); }
+.dc-fg-brown { color: var(--dc-hl-brown-border); }
+.dc-fg-orange { color: var(--dc-hl-orange-border); }
+.dc-fg-yellow { color: var(--dc-hl-yellow-border); }
+.dc-fg-green { color: var(--dc-hl-green-border); }
+.dc-fg-blue { color: var(--dc-hl-blue-border); }
+.dc-fg-purple { color: var(--dc-hl-purple-border); }
+.dc-fg-pink { color: var(--dc-hl-pink-border); }
+.dc-fg-red { color: var(--dc-hl-red-border); }
+
+.dc-mark-gray { background-color: var(--dc-hl-gray); color: inherit; }
+.dc-mark-brown { background-color: var(--dc-hl-brown); color: inherit; }
+.dc-mark-orange { background-color: var(--dc-hl-orange); color: inherit; }
+.dc-mark-yellow { background-color: var(--dc-hl-yellow); color: inherit; }
+.dc-mark-green { background-color: var(--dc-hl-green); color: inherit; }
+.dc-mark-blue { background-color: var(--dc-hl-blue); color: inherit; }
+.dc-mark-purple { background-color: var(--dc-hl-purple); color: inherit; }
+.dc-mark-pink { background-color: var(--dc-hl-pink); color: inherit; }
+.dc-mark-red { background-color: var(--dc-hl-red); color: inherit; }
+
 /* When comments are toggled off, drop the highlight entirely so the prose reads
    clean. Keyed on `dc-highlights` (which follows the master toggle), NOT on
    `dc-has` (the inline column) — so highlights persist when the sidebar panel
@@ -88,7 +317,7 @@ body {
    parent CodeMirror decoration tree. The table view plugin maps comment anchors
    into those cells and exposes non-mutating CSS Custom Highlight ranges. */
 ::highlight(document-comments-table) {
-	background-color: hsla(45, 90%, 50%, 0.18);
+	background-color: var(--dc-highlight-bg);
 	text-decoration: underline;
 }
 ::highlight(document-comments-table-resolved) {
@@ -130,7 +359,17 @@ body {
 	right: 0;
 	bottom: 0;
 	width: var(--dc-margin-width);
-	overflow: hidden;
+	/* Vertical-only: when several cards stack close together and their combined
+	   height exceeds the visible pane, this lets the column scroll internally
+	   (independent of the note's own scroll) so the lower ones are reachable
+	   instead of being silently clipped away with no way to see them. Scrolling
+	   still works while pointer-events stays none here — hovering a CARD (which
+	   sets pointer-events: auto) is enough for the wheel event to reach this
+	   scrollable ancestor; empty gaps between cards still click through to the
+	   editor beneath, as before. */
+	overflow-x: hidden;
+	overflow-y: auto;
+	scrollbar-width: thin;
 	pointer-events: none;
 	z-index: var(--layer-popover, 30);
 }
@@ -141,11 +380,55 @@ body {
 .markdown-reading-view.dc-has .doc-comment-margin {
 	/* Mirror of the sizer's centering math: column begins right where the
 	   centered text ends. Clamped so it never runs off the right edge. */
-	left: min(
-		calc((100% + var(--file-line-width, 50rem) - var(--dc-margin-width)) / 2),
-		calc(100% - var(--dc-margin-width))
-	);
+	left: calc(var(--dc-sizer-ml) + var(--dc-sizer-width));
 	right: auto;
+}
+/* Too narrow to reserve the column (text is back to full width, see
+   --dc-margin-reserve above) — pin the column to the right edge instead of the
+   now-meaningless sizer math, so a revealed card floats over the text. Same
+   specificity as the .dc-has rule above; this one must stay after it in the
+   file so it wins when both classes are present. */
+.cm-editor.dc-narrow .doc-comment-margin,
+.markdown-reading-view.dc-narrow .doc-comment-margin {
+	left: auto;
+	right: 0;
+}
+
+/* ── Folded-section comment badge ──────────────────────────────────────────
+   Stands in for the full card(s) whenever a comment's anchor sits inside a
+   toggled-closed (folded) heading/list/quote — clicking it reveals the thread
+   in the sidebar instead of leaving a card floating next to hidden text. */
+.dc-fold-badge {
+	position: absolute;
+	left: var(--dc-card-pad);
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	height: 20px;
+	padding: 0 7px;
+	border-radius: 10px;
+	background-color: var(--background-modifier-hover);
+	color: var(--text-muted);
+	font-size: var(--font-smaller);
+	font-variant-numeric: tabular-nums;
+	cursor: pointer;
+	pointer-events: auto;
+	white-space: nowrap;
+	user-select: none;
+	transition: background-color 120ms ease, color 120ms ease;
+}
+.dc-fold-badge:hover {
+	background-color: var(--background-modifier-border);
+	color: var(--text-normal);
+}
+.dc-fold-badge .svg-icon {
+	width: 11px;
+	height: 11px;
+	flex-shrink: 0;
+}
+.dc-fold-badge.dc-offscreen {
+	display: none;
 }
 
 /* ── Card ──────────────────────────────────────────────────────────────── */
@@ -158,26 +441,53 @@ body {
 	background-color: var(--background-primary);
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-m, 8px);
-	box-shadow: var(--shadow-s);
+	box-shadow: none;
 	font-size: var(--font-ui-small);
-	line-height: 1.5;
+	line-height: 1.25;
 	color: var(--text-normal);
 	pointer-events: auto;
 	/* No transition on `top`: cards must track the scroll exactly. Animating top
 	   makes them lag/swim behind the scroll (and restacks snap instantly, which is
-	   fine). Keep transitions for hover transform + shadow only. */
-	transition: transform 120ms ease, box-shadow 120ms ease;
+	   fine). Keep transitions for hover transform only. */
+	transition: transform 120ms ease, background-color 120ms ease;
 }
 .doc-comment-card:hover,
 .doc-comment-card.is-active,
 .doc-comment-card.is-open {
 	/* No colored border on the card itself (that's reserved for the text fields).
 	   Just a very subtle background lift (half-strength overlay) and a 2px nudge
-	   to the left, like Notion. */
-	box-shadow: inset 0 0 0 999px color-mix(in srgb, transparent, var(--background-modifier-hover) 50%),
-		var(--shadow-l);
+	   to the left, like Notion. No shadows. */
+	background-color: color-mix(in srgb, var(--background-primary), var(--background-modifier-hover) 30%);
+	box-shadow: none;
 	transform: translateX(-2px);
 	z-index: 2;
+}
+/* Narrow pane: cards don't float persistently — hidden until you hover their
+   anchor in the text (or the card itself, or it's open for a reply). Kept
+   positioned via visibility (not display) so the margin's stacking pass still
+   measures and places it correctly while hidden — it's ready the instant it's
+   revealed instead of jumping into place a frame later. Since it now floats
+   over the text rather than beside it, give it a shadow to lift it off the
+   page. */
+.cm-editor.dc-narrow .doc-comment-card:not(.is-draft),
+.markdown-reading-view.dc-narrow .doc-comment-card:not(.is-draft) {
+	visibility: hidden;
+	pointer-events: none;
+}
+.cm-editor.dc-narrow .doc-comment-card:hover,
+.cm-editor.dc-narrow .doc-comment-card.is-active,
+.cm-editor.dc-narrow .doc-comment-card.is-open,
+.markdown-reading-view.dc-narrow .doc-comment-card:hover,
+.markdown-reading-view.dc-narrow .doc-comment-card.is-active,
+.markdown-reading-view.dc-narrow .doc-comment-card.is-open {
+	visibility: visible;
+	pointer-events: auto;
+	/* Plain editor background here, not the hover-lift tint below — this is a
+	   popover over the text, not an item in a list, so it should read as part
+	   of the page rather than "selected." A light shadow (not --shadow-l) is
+	   what actually separates it from the text underneath. */
+	background-color: var(--background-primary);
+	box-shadow: var(--shadow-s);
 }
 .doc-comment-card.is-resolved {
 	opacity: 0.65;
@@ -188,19 +498,41 @@ body {
 	display: none;
 }
 
+/* ── Sidebar-only quoted selection ─────────────────────────────────────────
+   Shown above the thread only when the card has no margin/anchor to visually
+   tie it to the note (see card.ts render()). Clamped to 2 lines — it's just
+   a "what was this about" reminder, not the comment itself. */
+.dc-card-quote {
+	margin-bottom: 8px;
+	padding: 2px 8px;
+	border-left: 2px solid var(--dc-highlight-border);
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+	line-height: 1.4;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
 /* ── Collapse a long card (Notion-style "Show more") ───────────────────── */
 .dc-card-clip {
 	position: relative;
 }
 .dc-card-clip.dc-clamped {
-	/* Keep in sync with CLAMP_HEIGHT in card.ts. */
-	max-height: 220px;
+	/* ~6 lines of comment text (line-height: 1.25) plus the entry header. Keep
+	   in sync with CLAMP_HEIGHT in card.ts. */
+	max-height: 125px;
 	overflow: hidden;
 	/* Fade the truncated text to transparent by MASKING it (not overlaying a colored
 	   gradient), so the card's real background shows through and the fade matches the
-	   card in any state — hover or not — with no color to keep in sync. */
-	-webkit-mask-image: linear-gradient(to bottom, #000 65%, transparent);
-	mask-image: linear-gradient(to bottom, #000 65%, transparent);
+	   card in any state — hover or not — with no color to keep in sync. Short fade
+	   (last ~15%, about one line) — text stays readable almost to the very bottom,
+	   so "more" (anchored at this box's bottom edge) reads as sitting right on the
+	   last line instead of floating in a large dead zone below it. */
+	-webkit-mask-image: linear-gradient(to bottom, #000 85%, transparent);
+	mask-image: linear-gradient(to bottom, #000 85%, transparent);
 }
 .dc-card-foot {
 	display: flex;
@@ -212,21 +544,36 @@ body {
 .dc-card-foot.is-empty {
 	display: none;
 }
-/* Collapsed "Show more": a centered overlay pinned to the card's bottom edge, over
-   the faded text, so the fade reads as reaching the bottom of the card. */
+/* Collapsed "more": bottom-right corner, over the faded-out end of the text
+   (Notion-style — reads as a continuation of the truncated line, not a
+   separate button row), rather than centered across the whole card. A small
+   padding-top (not the fade's whole height) keeps it close to the now-short
+   fade zone above, and padding-right keeps it off the card's own right edge
+   instead of flush against it. */
 .dc-card-foot.dc-foot-overlay {
 	position: absolute;
 	left: 0;
 	right: 0;
 	bottom: 0;
 	margin: 0;
-	padding-top: 28px;
+	padding-top: 4px;
+	padding-right: 4px;
+	justify-content: flex-end;
 }
 .dc-foot-btn {
 	color: var(--text-muted);
 	font-size: var(--font-ui-smaller);
 	font-weight: var(--font-medium);
 	cursor: pointer;
+}
+/* Dimmer than the base .dc-foot-btn — "more" should read as a quiet
+   affordance blended into the fade, not a prominent link. "Open in sidebar"
+   (the non-overlay footer) keeps the more legible base color. */
+.dc-foot-overlay .dc-foot-btn {
+	color: var(--text-faint);
+}
+.dc-foot-overlay .dc-foot-btn:hover {
+	color: var(--text-muted);
 }
 .dc-foot-btn:hover {
 	color: var(--text-normal);
@@ -244,21 +591,34 @@ body {
 }
 .dc-entry__head {
 	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 2px;
+}
+.dc-entry__meta {
+	display: flex;
 	align-items: baseline;
 	gap: 6px;
-	margin-bottom: 2px;
+	min-width: 0;
 }
 .dc-entry__author {
 	font-weight: var(--font-semibold);
-	color: var(--text-normal);
+	font-size: var(--font-smaller);
+	color: var(--text-muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 .dc-entry__time {
 	color: var(--text-muted);
 	font-size: var(--font-smaller);
+	flex-shrink: 0;
 }
 .dc-entry__text {
 	overflow-wrap: anywhere;
 	color: var(--text-normal);
+	cursor: text;
 }
 .dc-entry__text--empty {
 	display: block;
@@ -312,35 +672,81 @@ body {
 	padding-left: 0.8em;
 	border-left: 2px solid var(--background-modifier-border);
 }
+.dc-entry__text code {
+	font-family: var(--font-monospace);
+	font-size: 0.9em;
+	background-color: var(--background-secondary-alt);
+	padding: 2px 4px;
+	border-radius: var(--radius-s, 4px);
+}
+.dc-entry__text pre code {
+	padding: 0;
+	background-color: transparent;
+	font-size: inherit;
+}
+/* A ==highlight== typed inside a comment renders as a plain <mark> — this
+   container isn't inside Obsidian's own `.markdown-rendered` note preview, so
+   without this it falls back to the browser's bare default yellow instead of
+   the vault's theme color. Excludes marks from the mini text-format toolbar
+   (dc-mark-*): those carry their own specific color and must NOT be
+   overridden to the theme default — this selector's specificity (one class +
+   `mark`) would otherwise beat a bare `.dc-mark-<id>` rule regardless of
+   which color was actually picked. */
+.dc-entry__text mark:not([class*="dc-mark-"]) {
+	background-color: var(--text-highlight-bg);
+	color: inherit;
+	border-radius: 2px;
+}
+.dc-entry__text a {
+	color: var(--link-color);
+	text-decoration: var(--link-decoration);
+}
+.dc-entry__text a:hover {
+	color: var(--link-color-hover);
+	text-decoration: var(--link-decoration-hover);
+}
+.dc-entry__text h1,
+.dc-entry__text h2,
+.dc-entry__text h3,
+.dc-entry__text h4,
+.dc-entry__text h5,
+.dc-entry__text h6 {
+	margin-top: 0.5em;
+	margin-bottom: 0.2em;
+	font-weight: var(--font-semibold);
+	line-height: 1.2;
+}
+.dc-entry__text h1 { font-size: 1.25em; }
+.dc-entry__text h2 { font-size: 1.15em; }
+.dc-entry__text h3 { font-size: 1.05em; }
+.dc-entry__text h4,
+.dc-entry__text h5,
+.dc-entry__text h6 { font-size: 1em; }
 
-/* ── Hover action bar ──────────────────────────────────────────────────── */
+/* ── Action bar ────────────────────────────────────────────────────────
+   Sits inline in the header row, right-aligned next to author/time. Always
+   visible (margin and sidebar alike) — the hover-to-reveal version kept
+   breaking, so it isn't worth the "clean until you hover" trade-off. */
 .dc-entry__bar {
-	position: absolute;
-	top: -4px;
-	right: 0;
 	display: flex;
 	gap: 2px;
-	padding: 2px;
-	background-color: var(--background-primary);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: var(--radius-m, 8px);
-	box-shadow: var(--shadow-s);
-	opacity: 0;
-	pointer-events: none;
-	transition: opacity 100ms ease;
+	flex-shrink: 0;
 }
-.dc-entry:hover .dc-entry__bar {
-	opacity: 1;
-	pointer-events: auto;
+.dc-act--delete:hover {
+	background: color-mix(in srgb, var(--text-error, #ff4d4f) 12%, transparent) !important;
+	color: var(--text-error, #ff4d4f) !important;
 }
 .dc-act {
 	display: flex;
+	flex-shrink: 0;
 	align-items: center;
 	justify-content: center;
-	width: 26px;
-	height: 26px;
+	width: 24px;
+	height: 24px;
 	padding: 0;
 	border: none;
+	font-size: 13px;
+	line-height: 1;
 	/* Concentric with the bar: inner radius = outer radius − bar padding (2px). */
 	border-radius: calc(var(--radius-m, 8px) - 2px);
 	background: transparent;
@@ -349,12 +755,15 @@ body {
 	cursor: pointer;
 }
 .dc-act:hover {
+	/* Blends into the card until hovered, then fills like the composer's
+	   round buttons (.dc-round) — consistent flat-icon-button treatment. */
 	background-color: var(--background-modifier-hover);
 	color: var(--text-normal);
 }
 .dc-act .svg-icon {
-	width: 16px;
-	height: 16px;
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
 }
 
 /* ── Reactions ─────────────────────────────────────────────────────────── */
@@ -396,8 +805,8 @@ body {
 
 /* ── Composer + edit field (boxed, Notion-style) ───────────────────────── */
 .dc-field {
-	margin-top: 12px;
-	padding: 8px 10px;
+	margin-top: 8px;
+	padding: 6px 8px;
 	border: 1px solid var(--background-modifier-border);
 	border-radius: var(--radius-m, 8px);
 	background-color: var(--background-modifier-form-field);
@@ -430,41 +839,48 @@ body {
 }
 .dc-field__actions {
 	display: flex;
+	align-items: center;
 	justify-content: flex-end;
 	gap: 6px;
-	margin-top: 6px;
+	margin-top: 4px;
 }
+/* Default background is the CARD's color (--background-primary), not
+   transparent — these buttons sit inside .dc-field, which has its own grey
+   --background-modifier-form-field background, so "transparent" would show
+   that grey instead of matching the card. Confirm keeps a tint of accent
+   color (icon only) so Save/Send still reads as the primary action. */
 .dc-round {
-	flex: 0 0 auto;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 26px;
-	height: 26px;
-	padding: 0;
-	border: none;
-	border-radius: 50%;
-	box-shadow: none;
-	cursor: pointer;
+	flex: 0 0 auto !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 28px !important;
+	height: 28px !important;
+	padding: 0 !important;
+	border: none !important;
+	border-radius: var(--radius-s, 4px) !important;
+	background-color: var(--background-primary) !important;
+	color: var(--text-muted) !important;
+	box-shadow: none !important;
+	cursor: pointer !important;
+	margin: 0 !important;
+	transition: background-color 150ms ease, color 150ms ease !important;
+}
+.dc-round:hover {
+	background-color: var(--background-modifier-hover) !important;
+	color: var(--text-normal) !important;
 }
 .dc-round .svg-icon {
-	width: 15px;
-	height: 15px;
-}
-.dc-round--cancel {
-	background-color: var(--background-modifier-border);
-	color: var(--text-muted);
-}
-.dc-round--cancel:hover {
-	background-color: var(--background-modifier-border-hover);
-	color: var(--text-normal);
+	width: 15px !important;
+	height: 15px !important;
+	flex-shrink: 0 !important;
 }
 .dc-round--confirm {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
+	color: var(--interactive-accent) !important;
 }
 .dc-round--confirm:hover {
-	background-color: var(--interactive-accent-hover);
+	background-color: var(--background-modifier-hover) !important;
+	color: var(--interactive-accent-hover, var(--interactive-accent)) !important;
 }
 
 /* ── Emoji picker popover ──────────────────────────────────────────────── */
@@ -496,10 +912,187 @@ body {
 	background-color: var(--background-modifier-hover);
 }
 
+/* ── Color swatch popover (the "Change color" menu item) ──────────────────
+   Same popover shell as the emoji picker (.dc-pop), just circular color
+   swatches instead of emoji buttons. */
+.dc-pop--colors {
+	flex-wrap: wrap;
+	max-width: 180px;
+}
+.dc-color-swatch {
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 50%;
+	box-shadow: none;
+	cursor: pointer;
+}
+.dc-color-swatch:hover {
+	border-color: var(--interactive-accent);
+}
+.dc-color-swatch.is-selected {
+	box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+.dc-color-swatch--default {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--background-secondary);
+	color: var(--text-muted);
+}
+.dc-color-swatch--default .svg-icon {
+	width: 12px;
+	height: 12px;
+}
+/* Text-color variant (used by the mini text-format toolbar): a bold "A" in
+   the swatch's own color on a neutral background, rather than a solid-color
+   circle — a solid circle reads as a highlight, not a text color. */
+.dc-color-swatch--text {
+	background-color: var(--background-secondary);
+	font-weight: 600;
+	font-size: 12px;
+}
+
+/* ── Mini text-format toolbar (ui/text-toolbar.ts) ─────────────────────────
+   Appears above a comment textarea when text inside it is selected: bold,
+   italic, underline, strikethrough, then text color / highlight — a
+   stripped-down version of the Notion Selection Toolbar plugin's floating
+   toolbar, scoped to comment composing/editing. */
+.dc-text-toolbar {
+	position: fixed;
+	z-index: var(--layer-popover, 70);
+	display: none;
+	align-items: center;
+	gap: 2px;
+	padding: 4px;
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m, 8px);
+	box-shadow: var(--shadow-l, 0 4px 16px rgba(0, 0, 0, 0.2));
+	font-size: 13px;
+	user-select: none;
+}
+.dc-text-toolbar.is-visible {
+	display: flex;
+}
+.dc-text-toolbar.is-measuring {
+	visibility: hidden;
+}
+.dc-text-toolbar__btn {
+	all: unset;
+	box-sizing: border-box;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	border-radius: var(--radius-s, 4px);
+	color: var(--text-normal);
+	cursor: pointer;
+}
+.dc-text-toolbar__btn:hover {
+	background-color: var(--background-modifier-hover);
+}
+.dc-text-toolbar__btn .svg-icon {
+	width: 14px;
+	height: 14px;
+}
+.dc-text-toolbar__sep {
+	width: 1px;
+	align-self: stretch;
+	margin: 2px 2px;
+	background: var(--background-modifier-border);
+	flex-shrink: 0;
+}
+/* Bold/italic/underline/strikethrough: plain text glyphs, not icons — same
+   reasoning as the color buttons below. */
+.dc-text-toolbar__bold {
+	font-weight: 700;
+}
+.dc-text-toolbar__italic {
+	font-style: italic;
+}
+.dc-text-toolbar__underline {
+	text-decoration: underline;
+}
+.dc-text-toolbar__strike {
+	text-decoration: line-through;
+}
+/* Both color buttons are a plain "A" glyph, not an icon — sized down from the
+   inherited page font-size (which read as too large/heavy in a 26px button),
+   and muted rather than full-strength text color so the letter itself reads
+   as a subtle control, not another piece of emphasized content. Deliberately
+   icon-free so there's no icon-name lookup to silently fail. */
+.dc-text-toolbar__a {
+	position: relative;
+	font-weight: 600;
+	font-size: 13px;
+	font-family: var(--font-text, inherit);
+	color: var(--text-muted);
+}
+/* Highlight is distinguished from plain text color by a small colored bar
+   underneath the "A", the same convention Notion's own format menu uses —
+   not another icon, so it can't end up invisible the way an unmatched icon
+   name would. Uses the more saturated "-border" tone (not the pale highlight
+   background) so the indicator itself stays clearly visible at 3px tall. */
+.dc-text-toolbar__highlight::after {
+	content: "";
+	position: absolute;
+	left: 5px;
+	right: 5px;
+	bottom: 4px;
+	height: 3px;
+	border-radius: 1px;
+	background-color: var(--dc-hl-yellow-border);
+}
+
+/* ── Three-dot "More" menu (Change color / Delete) ────────────────────────
+   Same shell as .dc-pop, laid out as a vertical text-item list instead. */
+.dc-menu {
+	position: fixed;
+	z-index: var(--layer-menu, 50);
+	min-width: 168px;
+	padding: 4px;
+	background-color: var(--background-primary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m, 8px);
+	box-shadow: var(--shadow-l);
+}
+.dc-menu-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 8px;
+	border-radius: var(--radius-s, 4px);
+	color: var(--text-normal);
+	font-size: var(--font-ui-small);
+	cursor: pointer;
+}
+.dc-menu-item:hover {
+	background-color: var(--background-modifier-hover);
+}
+.dc-menu-item.is-selected {
+	color: var(--interactive-accent);
+}
+.dc-menu-item .svg-icon {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+	color: var(--text-muted);
+}
+.dc-menu-item--danger:hover {
+	background-color: color-mix(in srgb, var(--text-error, #ff4d4f) 12%, transparent);
+	color: var(--text-error, #ff4d4f);
+}
+.dc-menu-item--danger:hover .svg-icon {
+	color: inherit;
+}
+
 /* ── New-comment draft (the inline composer that replaces the modal) ────── */
 .doc-comment-card.is-draft {
 	border-color: var(--interactive-accent);
-	box-shadow: var(--shadow-l);
+	box-shadow: none;
 	z-index: 3;
 }
 .doc-comment-card.is-draft .dc-field {
@@ -507,9 +1100,6 @@ body {
 	padding: 0;
 	border: none;
 	background: transparent;
-}
-.doc-comment-card.is-draft .dc-field__input {
-	min-height: 48px;
 }
 /* The text being commented on, highlighted while the draft is open. */
 .doc-comment-span.dc-draft {
@@ -562,9 +1152,12 @@ body {
 	color: var(--text-normal);
 }
 .dc-sidebar__tab.is-active {
+	/* Flat — a background/weight change reads as "selected" without a drop
+	   shadow, matching Notion's own segmented controls and most PDF
+	   annotation tools' comment-panel tabs. */
 	background-color: var(--background-primary);
 	color: var(--text-normal);
-	box-shadow: var(--shadow-s);
+	font-weight: var(--font-medium);
 }
 .dc-sidebar__tab-count {
 	color: var(--text-faint);
@@ -583,12 +1176,31 @@ body {
 	padding: 8px 0 50vh;
 }
 /* The cards are the same component as the margin, just laid out in normal flow
-   (the margin pins them with an absolute `top`; here they stack). */
+   (the margin pins them with an absolute `top`; here they stack). Flattened
+   here vs. the margin's floating boxes — a plain list with hairline dividers
+   between threads and no per-thread border/shadow/nudge, matching Notion's
+   own "All comments" panel and most PDF tools' comment sidebars, where the
+   boxed-card treatment (needed in the margin to visually separate a card
+   from the page behind it) would just look noisy stacked edge-to-edge. */
 .dc-sidebar .doc-comment-card {
 	position: static;
 	left: auto;
 	right: auto;
 	width: 100%;
+	background-color: transparent;
+	border: none;
+	border-bottom: 1px solid var(--background-modifier-border);
+	border-radius: 0;
+	padding: 12px 4px;
+}
+.dc-sidebar .doc-comment-card:last-child {
+	border-bottom: none;
+}
+.dc-sidebar .doc-comment-card:hover,
+.dc-sidebar .doc-comment-card.is-active,
+.dc-sidebar .doc-comment-card.is-open {
+	background-color: var(--background-modifier-hover);
+	transform: none;
 }
 
 .dc-sidebar__empty {
@@ -619,3 +1231,54 @@ body {
 	min-height: 5em;
 	resize: vertical;
 }
+.dc-floating-button {
+	position: fixed;
+	z-index: calc(var(--layer-popover, 30) + 5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border: 1px solid var(--interactive-accent);
+	border-radius: 50%;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+	cursor: pointer;
+	padding: 0;
+	opacity: 0;
+	transform: scale(0.8);
+	transition: transform 180ms cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 120ms ease, box-shadow 120ms ease, background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+	pointer-events: none;
+}
+.theme-light .dc-floating-button {
+	background-color: #ffffff;
+	color: var(--interactive-accent);
+}
+.theme-dark .dc-floating-button {
+	background-color: #1e1e1e;
+	color: var(--interactive-accent);
+}
+.dc-floating-button.is-visible {
+	opacity: 1;
+	transform: scale(1);
+	pointer-events: auto;
+}
+.dc-floating-button:hover {
+	transform: scale(1.1) translateY(-2px);
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+.dc-floating-button:active {
+	transform: scale(0.95);
+	background-color: var(--interactive-accent-hover, var(--interactive-accent));
+}
+.dc-floating-button .svg-icon {
+	width: 14px;
+	height: 14px;
+	display: block;
+}
+
+
+
+

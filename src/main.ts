@@ -25,6 +25,14 @@ import { COMMENTS_VIEW_TYPE, CommentsSidebarView, SidebarDeps } from "./ui/sideb
 import { CommentModal } from "./ui/comment-modal";
 import { DEFAULT_SETTINGS, DocCommentsSettings, DocCommentsSettingTab } from "./settings";
 import { tableHighlightPlugin } from "./editor/table-highlights";
+import { FloatingButtonManager } from "./ui/floating-button";
+import {
+	applyAnnotationStyle,
+	applyCustomHighlightColors,
+	applyHighlightColor,
+	applyHighlightIntensity,
+} from "./ui/highlight-colors";
+import { TextFormatToolbar } from "./ui/text-toolbar";
 
 export default class DocCommentsPlugin extends Plugin {
 	settings: DocCommentsSettings = { ...DEFAULT_SETTINGS };
@@ -34,10 +42,16 @@ export default class DocCommentsPlugin extends Plugin {
 	private scheduleReadingRefresh: () => void = () => {};
 	/** True while the "All discussions" sidebar panel is mounted. */
 	private sidebarOpen = false;
+	private floatingButtonManager: FloatingButtonManager | null = null;
+	private textToolbar: TextFormatToolbar | null = null;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
 		this.addChild(this.markdown);
+		applyHighlightColor(this.settings.highlightColor);
+		applyHighlightIntensity(this.settings.highlightIntensity);
+		applyCustomHighlightColors(this.settings.highlightColorsLight, this.settings.highlightColorsDark);
+		applyAnnotationStyle(this.settings.annotationStyle);
 
 		this.registerEditorExtension([
 			commentField,
@@ -117,6 +131,10 @@ export default class DocCommentsPlugin extends Plugin {
 		// even if layout-change doesn't.
 		this.registerEvent(this.app.workspace.on("resize", () => this.syncSidebarOpen()));
 		this.registerEvent(this.app.vault.on("modify", () => this.scheduleReadingRefresh()));
+		// Fires on theme/appearance changes (light↔dark, snippet toggles, …) — a
+		// custom per-color override is picked per-theme, so switching needs a
+		// re-apply to pick up the other theme's map.
+		this.registerEvent(this.app.workspace.on("css-change", () => this.refreshHighlightColor()));
 
 		this.addCommand({
 			id: "add-comment",
@@ -162,9 +180,11 @@ export default class DocCommentsPlugin extends Plugin {
 		this.addRibbonIcon("messages-square", "Open comments sidebar", () => void this.activateSidebar());
 
 		this.addSettingTab(new DocCommentsSettingTab(this.app, this));
+		this.floatingButtonManager = new FloatingButtonManager(this);
+		this.textToolbar = new TextFormatToolbar();
 	}
 
-	private startAddComment(editor: Editor): void {
+	public startAddComment(editor: Editor): void {
 		const view = editorView(editor);
 		if (!view) {
 			new Notice("Couldn't access the editor.");
@@ -211,7 +231,7 @@ export default class DocCommentsPlugin extends Plugin {
 
 	/** Reading view has no editor surface, so map the rendered selection back to
 	 *  source offsets (best-effort) and prompt for the comment text. */
-	private startAddCommentReading(view: MarkdownView): void {
+	public startAddCommentReading(view: MarkdownView): void {
 		const selection = activeWindow.getSelection();
 		const selected = selection?.toString() ?? "";
 		if (!selection || selection.rangeCount === 0 || !selected.trim()) {
@@ -310,6 +330,17 @@ export default class DocCommentsPlugin extends Plugin {
 		new Notice(this.settings.showResolved ? "Resolved comments shown" : "Resolved comments hidden");
 	}
 
+	/** Re-applies the chosen palette color, the intensity slider, any custom
+	 *  per-color overrides, and the highlight/underline annotation style.
+	 *  Called by the settings tab after any of those change, and on theme
+	 *  switches (custom overrides are picked per-theme). */
+	refreshHighlightColor(): void {
+		applyHighlightColor(this.settings.highlightColor);
+		applyHighlightIntensity(this.settings.highlightIntensity);
+		applyCustomHighlightColors(this.settings.highlightColorsLight, this.settings.highlightColorsDark);
+		applyAnnotationStyle(this.settings.annotationStyle);
+	}
+
 	updateRibbon(): void {
 		if (!this.ribbonIcon) return;
 		this.ribbonIcon.toggleClass("is-active", this.settings.showComments);
@@ -390,6 +421,8 @@ export default class DocCommentsPlugin extends Plugin {
 
 	onunload(): void {
 		this.readingManager?.destroy();
+		this.floatingButtonManager?.destroy();
+		this.textToolbar?.destroy();
 	}
 
 	private authorName(): string {

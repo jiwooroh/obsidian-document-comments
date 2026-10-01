@@ -209,6 +209,16 @@ export const computeSetResolved = (doc: string, id: string, resolved: boolean): 
 	return replaceBody(doc, id, (c) => ({ ...toData(c), status: resolved ? "resolved" : "open" }));
 };
 
+/** Set (or clear, with `undefined`) this comment's highlight color override. */
+export const computeSetColor = (doc: string, id: string, color: string | undefined): Result<Change[], string> => {
+	return replaceBody(doc, id, (c) => ({ ...toData(c), color }));
+};
+
+/** Set (or clear, with `undefined`) this comment's annotation-style override. */
+export const computeSetStyle = (doc: string, id: string, style: string | undefined): Result<Change[], string> => {
+	return replaceBody(doc, id, (c) => ({ ...toData(c), style }));
+};
+
 /** Replace the text of the i-th message in a thread. */
 export const computeEditEntry = (doc: string, id: string, index: number, text: string): Result<Change[], string> => {
 	return replaceBody(doc, id, (c) => {
@@ -255,6 +265,8 @@ const toData = (c: ParsedComment): CommentData => {
 		status: c.status,
 		quote: c.quote,
 		codeLines: c.codeLines,
+		color: c.color,
+		style: c.style,
 		thread: c.thread,
 		reactions: c.reactions,
 	};

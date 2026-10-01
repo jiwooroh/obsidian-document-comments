@@ -273,7 +273,9 @@ const compute = (state: EditorState): CommentFieldValue => {
 			// NOT show where Obsidian replaces the source with a widget — most notably
 			// a Live-Preview table (.cm-table-widget, a self-contained nested editor):
 			// the underlying text is hidden, so the highlight can't render there.
-			const cls = c.status === "resolved" ? "doc-comment-span is-resolved" : "doc-comment-span";
+			let cls = c.status === "resolved" ? "doc-comment-span is-resolved" : "doc-comment-span";
+			if (c.color) cls += ` dc-color-${c.color}`;
+			if (c.style) cls += ` dc-style-${c.style}`;
 			const attributes: Record<string, string> = { "data-cid": c.id };
 			const preview = commentPreview(c);
 			if (preview) attributes.title = preview;

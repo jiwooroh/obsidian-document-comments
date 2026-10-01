@@ -1,5 +1,7 @@
 # Document Comments
 
+> **Fork notice:** This is a fork of [kylemcd/obsidian-document-comments](https://github.com/kylemcd/obsidian-document-comments) by **Kyle McDonald**, with additional changes by Lucy Roh (text formatting toolbar, highlight colors, floating button, and more). The original work is used under the MIT License; see [LICENSE](LICENSE).
+
 Document Comments adds inline comments to Obsidian notes. It shows each comment as a card beside the text on desktop.
 
 The plugin stores each comment inside its Markdown file as an HTML comment. Other editors, version control tools, and agents can read the comment.

@@ -1,6 +1,7 @@
-import { Notice, editorInfoField } from "obsidian";
+import { Notice, editorInfoField, setIcon } from "obsidian";
 import { Result } from "better-result";
 import { EditorView, PluginValue, ViewPlugin } from "@codemirror/view";
+import { foldedRanges } from "@codemirror/language";
 import { ParsedComment } from "../format/types";
 import { anchorRange, hasMarginAnchor } from "../format/parse";
 import { isCodeComment, resolveCodeAnchor } from "../format/code-anchor";
@@ -15,12 +16,15 @@ import {
 	deleteComment,
 	deleteEntry,
 	editEntry,
+	setColor,
 	setResolved,
+	setStyle,
 	toggleReaction,
 } from "./commands";
 import { closestSpanId, spanSelector } from "../util/css";
+import { isNarrowForMargin } from "../util/narrow";
 import { stackTops } from "../ui/stack";
-import { CARD_GAP, FLASH_MS } from "../ui/constants";
+import { CARD_GAP, DRAFT_LIFT_PX, FLASH_MS } from "../ui/constants";
 import { buildDraftComposer } from "../ui/draft-composer";
 import { EmptySubmitAction } from "../ui/draft-behavior";
 
@@ -37,6 +41,11 @@ const notifyErr = <T>(result: Result<T, string>): Result<T, string> => {
 class MarginView implements PluginValue {
 	private container: HTMLElement;
 	private cards = new Map<string, Card>();
+	/** One compact "N comments" badge per folded (toggled-closed) section that
+	 *  contains comments — keyed by the fold range's start offset. Replaces the
+	 *  individual cards for that section, which would otherwise float in the
+	 *  margin next to text the user just hid. */
+	private foldBadges = new Map<number, HTMLElement>();
 	private activeId: string | null = null;
 	private draftEl: HTMLElement | null = null;
 	private setDraftEmptyAction: ((action: EmptySubmitAction) => void) | null = null;
@@ -79,6 +88,8 @@ class MarginView implements PluginValue {
 			revealComposer: (id) => this.revealComposer(id),
 			reply: (id, text) => notifyErr(appendReply(view, id, text, this.cb.getAuthor())),
 			setResolved: (id, resolved) => notifyErr(setResolved(view, id, resolved)),
+			setColor: (id, colorId) => notifyErr(setColor(view, id, colorId)),
+			setStyle: (id, styleId) => notifyErr(setStyle(view, id, styleId)),
 			remove: (id) => notifyErr(deleteComment(view, id)),
 			editEntry: (id, index, text) => notifyErr(editEntry(view, id, index, text)),
 			deleteEntry: (id, index) => notifyErr(deleteEntry(view, id, index)),
@@ -139,6 +150,7 @@ class MarginView implements PluginValue {
 		this.removeDraftOutside();
 		for (const card of this.cards.values()) card.destroy();
 		this.cards.clear();
+		this.foldBadges.clear();
 		this.container.remove();
 	}
 
@@ -201,12 +213,26 @@ class MarginView implements PluginValue {
 		const draft = this.view.state.field(draftField, false) ?? null;
 		this.syncDraftEl(draft);
 
+		// Too narrow for the text column and the margin to coexist — stop reserving
+		// space for the column (the text reclaims it) and let cards hide until their
+		// anchor is hovered instead of floating persistently. `dc-narrow` is plain
+		// state (like dc-offscreen), not routed through editorAttributes, since it's
+		// geometry-derived and only this measure pass needs to know about it.
+		this.view.dom.toggleClass("dc-narrow", isNarrowForMargin(this.view.scrollDOM));
+
 		const editorTop = this.view.dom.getBoundingClientRect().top;
 		// Gather geometry (reads) first, then write every top in one pass — cards are
 		// absolutely positioned, so a top write can't change any height.
 		const placements: Array<{ el: HTMLElement; top: number; height: number }> = [];
 
-		const place = (el: HTMLElement, pos: number) => {
+		/** Places `el` relative to the anchor at `pos`. `center: true` (used for
+		 *  already-saved cards, which have a stable height at render time) aligns
+		 *  the card's own vertical middle with the anchor line's middle, rather
+		 *  than starting flush with its top — closer to how a tooltip centers on
+		 *  its trigger. `lift` (used for the draft composer, which grows while you
+		 *  type) is the simpler fixed nudge instead — centering something that's
+		 *  actively resizing under your cursor would make it jump as you type. */
+		const place = (el: HTMLElement, pos: number, opts: { lift?: number; center?: boolean } = {}) => {
 			const coords = this.view.coordsAtPos(pos);
 			if (!coords) {
 				el.addClass("dc-offscreen");
@@ -214,8 +240,21 @@ class MarginView implements PluginValue {
 			}
 			el.removeClass("dc-offscreen");
 			if (el.offsetHeight === 0) return; // hidden (e.g. resolved)
-			placements.push({ el, top: coords.top - editorTop, height: el.offsetHeight });
+			const top = opts.center
+				? (coords.top + coords.bottom) / 2 - editorTop - el.offsetHeight / 2
+				: coords.top - editorTop - (opts.lift ?? 0);
+			placements.push({ el, top, height: el.offsetHeight });
 		};
+
+		// Every currently-folded (toggled-closed) range in the document, so a
+		// comment anchored inside one can be swapped for a compact badge instead
+		// of a full card floating next to text the user just hid.
+		const folds: Array<{ from: number; to: number }> = [];
+		foldedRanges(this.view.state).between(0, this.view.state.doc.length, (from, to) => {
+			folds.push({ from, to });
+		});
+		const foldContaining = (pos: number) => folds.find((f) => pos >= f.from && pos < f.to);
+		const foldGroups = new Map<number, { fold: { from: number; to: number }; ids: string[] }>();
 
 		const doc = this.view.state.doc.toString();
 		for (const c of this.comments()) {
@@ -223,14 +262,77 @@ class MarginView implements PluginValue {
 			if (!card) continue;
 			// A code comment's card aligns to its target line, not the block top.
 			const range = isCodeComment(c) ? resolveCodeAnchor(doc, c) : anchorRange(c);
-			if (range) place(card.el, range.from);
-			else card.el.addClass("dc-offscreen"); // orphaned (e.g. the commented code changed)
+			if (!range) {
+				card.el.addClass("dc-offscreen"); // orphaned (e.g. the commented code changed)
+				continue;
+			}
+			const fold = foldContaining(range.from);
+			if (fold) {
+				card.el.addClass("dc-offscreen");
+				const group = foldGroups.get(fold.from);
+				if (group) group.ids.push(c.id);
+				else foldGroups.set(fold.from, { fold, ids: [c.id] });
+				continue;
+			}
+			place(card.el, range.from, { center: true });
 		}
 
-		if (draft && this.draftEl) place(this.draftEl, draft.from);
+		// Nudged up a bit vs. a resting card — writing a fresh comment needs room
+		// below to grow into as you type, so it shouldn't start flush with its
+		// anchor line the way an already-written card can.
+		if (draft && this.draftEl) place(this.draftEl, draft.from, { lift: DRAFT_LIFT_PX });
 
 		const tops = stackTops(placements, CARD_GAP);
 		placements.forEach((p, i) => p.el.setCssStyles({ top: `${tops[i]}px` }));
+
+		this.syncFoldBadges(foldGroups, editorTop);
+	}
+
+	/** One badge per folded section that has comments, positioned at the fold's
+	 *  own (still-visible) line. Reuses existing badge elements across passes so
+	 *  a badge doesn't flicker while its count or position is merely updated. */
+	private syncFoldBadges(
+		groups: Map<number, { fold: { from: number; to: number }; ids: string[] }>,
+		editorTop: number,
+	): void {
+		for (const [key, el] of this.foldBadges) {
+			if (!groups.has(key)) {
+				el.remove();
+				this.foldBadges.delete(key);
+			}
+		}
+		for (const [key, { fold, ids }] of groups) {
+			let badge = this.foldBadges.get(key);
+			if (!badge) {
+				badge = this.container.createDiv({ cls: "dc-fold-badge" });
+				const icon = badge.createSpan();
+				setIcon(icon, "message-square");
+				badge.createSpan({ cls: "dc-fold-badge__count" });
+				badge.addEventListener("mousedown", (e) => e.preventDefault());
+				badge.addEventListener("click", (e) => {
+					e.stopPropagation();
+					const target = badge?.dataset.ids?.split(",")[0];
+					if (target) this.cb.openInSidebar?.(target);
+				});
+				this.foldBadges.set(key, badge);
+			}
+			badge.dataset.ids = ids.join(",");
+			const countEl = badge.querySelector(".dc-fold-badge__count");
+			if (countEl) countEl.setText(String(ids.length));
+			badge.setAttribute(
+				"aria-label",
+				`${ids.length} comment${ids.length === 1 ? "" : "s"} hidden in this toggled section`,
+			);
+			// Anchor to the fold's own start (the still-visible line the fold
+			// widget sits on), same viewport-relative math as card placement.
+			const coords = this.view.coordsAtPos(fold.from);
+			if (coords) {
+				badge.removeClass("dc-offscreen");
+				badge.setCssStyles({ top: `${coords.top - editorTop}px` });
+			} else {
+				badge.addClass("dc-offscreen");
+			}
+		}
 	}
 
 	/** Create/remove the transient "new comment" composer card. */
@@ -239,13 +341,15 @@ class MarginView implements PluginValue {
 			this.draftEl = this.buildDraftEl();
 			this.container.appendChild(this.draftEl);
 			this.draftFocused = false;
-			// Click away from an empty draft dismisses it (Notion behavior).
+			// Clicking anywhere outside the composer exits commenting — but only when
+			// there's nothing typed yet. Discarding whatever you were writing just
+			// because a click landed elsewhere would lose it with no way back; Escape
+			// remains the explicit way to cancel a non-empty draft.
 			this.draftOutside = (e: MouseEvent) => {
 				if (!this.draftEl || this.draftEl.contains(e.target as Node)) return;
 				const ta = this.draftEl.querySelector("textarea");
-				if (ta instanceof HTMLTextAreaElement && !ta.disabled && ta.value.trim() === "") {
-					this.view.dispatch({ effects: clearDraft.of(null) });
-				}
+				if (ta instanceof HTMLTextAreaElement && (ta.disabled || ta.value.trim().length > 0)) return;
+				this.view.dispatch({ effects: clearDraft.of(null) });
 			};
 			this.view.dom.ownerDocument.addEventListener("mousedown", this.draftOutside, true);
 		} else if (!draft && this.draftEl) {

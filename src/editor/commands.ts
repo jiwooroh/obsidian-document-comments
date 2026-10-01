@@ -11,7 +11,9 @@ import {
 	computeDeleteComment,
 	computeDeleteEntry,
 	computeEditEntry,
+	computeSetColor,
 	computeSetResolved,
+	computeSetStyle,
 	computeToggleReaction,
 	findHighlightAtSelection,
 } from "./edits";
@@ -53,6 +55,18 @@ export const appendReply = (view: EditorView, id: string, text: string, author: 
 
 export const setResolved = (view: EditorView, id: string, resolved: boolean): Result<void, string> => {
 	return computeSetResolved(view.state.doc.toString(), id, resolved).map((changes) => {
+		view.dispatch({ changes });
+	});
+};
+
+export const setColor = (view: EditorView, id: string, color: string | undefined): Result<void, string> => {
+	return computeSetColor(view.state.doc.toString(), id, color).map((changes) => {
+		view.dispatch({ changes });
+	});
+};
+
+export const setStyle = (view: EditorView, id: string, style: string | undefined): Result<void, string> => {
+	return computeSetStyle(view.state.doc.toString(), id, style).map((changes) => {
 		view.dispatch({ changes });
 	});
 };

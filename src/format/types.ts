@@ -24,6 +24,13 @@ export type CommentData = {
 	 *  (0-based, inclusive) the comment actually targets. `quote` is the re-anchor
 	 *  key; these lines are the fast path and the disambiguator. */
 	codeLines?: TextRange;
+	/** Palette id (see ui/highlight-colors.ts) overriding this comment's highlight.
+	 *  Absent means "follow the plugin-wide default" (settings → Highlight color). */
+	color?: string;
+	/** Annotation-style id ("highlight" or "underline", see ui/highlight-colors.ts)
+	 *  overriding this comment's anchor style. Absent means "follow the plugin-wide
+	 *  default" (settings → Annotation style) — same override pattern as `color`. */
+	style?: string;
 	thread: ThreadEntry[];
 	reactions: Reaction[];
 };

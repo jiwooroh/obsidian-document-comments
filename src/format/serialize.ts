@@ -25,6 +25,8 @@ export const serializeBody = (id: string, data: CommentData): string => {
 		const { from, to } = data.codeLines;
 		head.push(`line:${from === to ? from : `${from}-${to}`}`);
 	}
+	if (data.color) head.push(`color:${sanitizeToken(data.color)}`);
+	if (data.style) head.push(`style:${sanitizeToken(data.style)}`);
 
 	const lines = data.thread.map(serializeEntry);
 	const reactionLines = (data.reactions ?? [])

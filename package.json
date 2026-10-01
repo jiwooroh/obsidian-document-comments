@@ -18,9 +18,10 @@
 	"keywords": [
 		"obsidian-plugin"
 	],
-	"author": "Kyle McDonald",
+	"author": "Lucy Roh",
 	"license": "MIT",
 	"devDependencies": {
+		"@codemirror/language": "^6.12.4",
 		"@codemirror/state": "^6.7.1",
 		"@codemirror/view": "^6.43.7",
 		"@types/node": "^26.1.2",

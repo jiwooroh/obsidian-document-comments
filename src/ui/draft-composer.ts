@@ -1,4 +1,3 @@
-import { setIcon } from "obsidian";
 import {
 	draftPlaceholder,
 	DraftSubmitHandler,
@@ -6,6 +5,7 @@ import {
 	emptySubmitLabel,
 	submitDraft,
 } from "./draft-behavior";
+import { autogrowTextarea, setIconSafe } from "./text-format";
 
 export type DraftComposerHandlers = {
 	/** Called with the trimmed text on Enter or the confirm button. */
@@ -30,7 +30,7 @@ export const buildDraftComposer = (
 	let saving = false;
 	const textarea = box.createEl("textarea", {
 		cls: "dc-field__input",
-		attr: { placeholder: draftPlaceholder(initialEmptyAction), rows: "2" },
+		attr: { placeholder: draftPlaceholder(initialEmptyAction), rows: "1" },
 	});
 	const actions = box.createDiv("dc-field__actions");
 	const setSaving = (value: boolean): void => {
@@ -48,27 +48,18 @@ export const buildDraftComposer = (
 		}
 	};
 
-	const cancelBtn = actions.createEl("button", {
-		cls: "dc-round dc-round--cancel",
-		attr: { "aria-label": "Cancel" },
-	});
-	setIcon(cancelBtn, "x");
-	cancelBtn.addEventListener("click", (e) => {
-		e.stopPropagation();
-		handlers.onCancel();
-	});
-
 	const confirmBtn = actions.createEl("button", {
 		cls: "dc-round dc-round--confirm",
 		attr: { "aria-label": emptyLabel },
 	});
-	setIcon(confirmBtn, "check");
+	setIconSafe(confirmBtn, "arrow-up", "↑");
 	confirmBtn.addEventListener("click", (e) => {
 		e.stopPropagation();
 		void submit();
 	});
 	textarea.addEventListener("input", () => {
 		confirmBtn.setAttribute("aria-label", textarea.value.trim() ? "Comment" : emptyLabel);
+		autogrowTextarea(textarea);
 	});
 
 	textarea.addEventListener("keydown", (e) => {
