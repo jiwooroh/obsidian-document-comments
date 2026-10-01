@@ -316,11 +316,11 @@ body .doc-comment-span.dc-style-underline {
 /* Obsidian renders Live Preview tables as nested editor widgets, outside the
    parent CodeMirror decoration tree. The table view plugin maps comment anchors
    into those cells and exposes non-mutating CSS Custom Highlight ranges. */
-::highlight(document-comments-table) {
+::highlight(notion-style-comments-table) {
 	background-color: var(--dc-highlight-bg);
 	text-decoration: underline;
 }
-::highlight(document-comments-table-resolved) {
+::highlight(notion-style-comments-table-resolved) {
 	background-color: hsla(0, 0%, 50%, 0.12);
 	text-decoration: underline;
 }

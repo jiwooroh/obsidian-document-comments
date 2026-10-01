@@ -1,8 +1,8 @@
-# Document Comments (Lucy's fork)
+# Notion-style Comments
 
-> This is a fork of [kylemcd/obsidian-document-comments](https://github.com/kylemcd/obsidian-document-comments) by **Kyle McDonald**. All credit for the original plugin goes to the original author. This fork adds the features listed below. The original work is used under the MIT License; see [LICENSE](LICENSE).
+> This is a fork of [kylemcd/obsidian-document-comments](https://github.com/kylemcd/obsidian-document-comments) (**Document Comments**) by **Kyle McDonald**. All credit for the original plugin goes to the original author. This fork adds the features listed below. The original work is used under the MIT License; see [LICENSE](LICENSE).
 
-Document Comments adds inline comments to Obsidian notes. It shows each comment as a card beside the text on desktop.
+Notion-style Comments adds inline comments to Obsidian notes. It shows each comment as a card beside the text on desktop.
 
 The plugin stores each comment inside its Markdown file as an HTML comment. Other editors, version control tools, and agents can read the comment.
 
@@ -101,17 +101,15 @@ We should <!--c:h7k2-->ship on Friday<!--/c:h7k2--> regardless of the QA timelin
 
 ## Install
 
-Document Comments requires Obsidian 1.7.2 or newer. It supports desktop and mobile.
+Notion-style Comments requires Obsidian 1.7.2 or newer. It supports desktop and mobile.
 
 ### Community plugins
 
-The community plugin directory installs the **original** plugin, without this fork's features. To get this fork, use BRAT, a manual install, or build from source.
-
-Use the [Document Comments plugin page](https://community.obsidian.md/plugins/document-comments), or install it from Obsidian:
+Install it from Obsidian:
 
 1. Open **Settings → Community plugins**.
 2. Select **Browse**.
-3. Search for **Document Comments**.
+3. Search for **Notion-style Comments**.
 4. Select **Install**.
 5. Select **Enable**.
 
@@ -123,18 +121,18 @@ Use BRAT to install a pre-release build:
 2. Enable **BRAT**.
 3. Run **BRAT: Add a beta plugin for testing**.
 4. Enter `jiwooroh/obsidian-document-comments`.
-5. Enable **Document Comments** in Community plugins.
+5. Enable **Notion-style Comments** in Community plugins.
 
 BRAT installs the latest GitHub release and checks for updates.
 
 ### Manual install
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/jiwooroh/obsidian-document-comments/releases).
-2. Copy the files to `<your-vault>/.obsidian/plugins/document-comments/`.
+2. Copy the files to `<your-vault>/.obsidian/plugins/notion-style-comments/`.
 3. Restart or reload Obsidian.
-4. Enable **Document Comments** in Community plugins.
+4. Enable **Notion-style Comments** in Community plugins.
 
-Create the `document-comments` directory if it does not exist.
+Create the `notion-style-comments` directory if it does not exist.
 
 ### Build from source
 
@@ -145,9 +143,9 @@ npm install
 npm run build
 ```
 
-Copy or link `main.js`, `manifest.json`, and `styles.css` to `<your-vault>/.obsidian/plugins/document-comments/`.
+Copy or link `main.js`, `manifest.json`, and `styles.css` to `<your-vault>/.obsidian/plugins/notion-style-comments/`.
 
-Then enable **Document Comments** in Community plugins.
+Then enable **Notion-style Comments** in Community plugins.
 
 ## Use the plugin
 
@@ -162,9 +160,9 @@ Press Shift+Enter to add a line break. On mobile, use the dialog to save the com
 
 ### Add an empty comment
 
-Document Comments disables empty comments by default.
+Notion-style Comments disables empty comments by default.
 
-1. Open **Settings → Document Comments**.
+1. Open **Settings → Notion-style Comments**.
 2. Enable **Allow empty comments**.
 3. Select text and run **Add comment**.
 4. Leave the comment field empty.
@@ -193,7 +191,7 @@ The optional [Commander plugin](https://community.obsidian.md/plugins/cmdr) can 
 1. Open **Settings → Commander**.
 2. Select **Editor Menu**.
 3. Select **Add command**.
-4. Search for `Document Comments: Add comment`.
+4. Search for `Notion-style Comments: Add comment`.
 5. Select the command.
 6. Choose an icon.
 
@@ -218,7 +216,7 @@ Use **Toggle comments** to show or hide all cards and highlights. Use **Toggle r
 
 ### Set the author
 
-Open **Settings → Document Comments**. Set **Author** to the name that the plugin adds to new comments.
+Open **Settings → Notion-style Comments**. Set **Author** to the name that the plugin adds to new comments.
 
 The plugin uses `me` when the Author setting is empty.
 
@@ -232,7 +230,7 @@ Mobile uses a dialog for new comments. The stored comment format stays the same 
 
 ## Agent support
 
-This repository includes an agent skill for the Document Comments format:
+This repository includes an agent skill for the comment format:
 
 ```text
 skills/document-comments/
@@ -247,10 +245,6 @@ python3 skills/document-comments/scripts/validate_comments.py path/to/file.md
 ## Privacy
 
 The plugin does not use the network, telemetry, or accounts. It stores all comment data in the note.
-
-## Roadmap
-
-Use the [Document Comments project](https://github.com/users/kylemcd/projects/1) to see the roadmap, current work, and planned work.
 
 ## Known limitations
 
@@ -282,18 +276,12 @@ Update `manifest.json`, `package.json`, `versions.json`, and `CHANGELOG.md` befo
 Push a tag that exactly matches the version in `manifest.json`:
 
 ```bash
-git tag 0.1.11
-git push origin 0.1.11
+git tag 0.2.1
+git push origin 0.2.1
 ```
 
-The [release workflow](.github/workflows/release.yml) builds the plugin and publishes the GitHub release. It also creates attestations for the release files.
-
-Verify a downloaded file with this command:
-
-```bash
-gh attestation verify main.js --repo kylemcd/obsidian-document-comments
-```
+Then create a GitHub release for that tag with `main.js`, `manifest.json`, and `styles.css` attached.
 
 ## License
 
-Document Comments uses the MIT License. See [LICENSE](LICENSE).
+Notion-style Comments uses the MIT License. See [LICENSE](LICENSE).

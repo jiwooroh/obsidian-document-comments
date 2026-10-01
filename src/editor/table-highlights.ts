@@ -17,8 +17,8 @@ type TableRanges = { open: Range[]; resolved: Range[] };
 type BrowserWindow = NonNullable<Document["defaultView"]>;
 type SourceTable = { start: number; end: number; from: number; to: number };
 
-const OPEN_HIGHLIGHT = "document-comments-table";
-const RESOLVED_HIGHLIGHT = "document-comments-table-resolved";
+const OPEN_HIGHLIGHT = "notion-style-comments-table";
+const RESOLVED_HIGHLIGHT = "notion-style-comments-table-resolved";
 // `CSS.highlights` is a per-DOCUMENT global registry, so every editor view in a
 // window must merge its ranges before we set it. Keyed by document (pop-out
 // windows have their own) → each view's current ranges.

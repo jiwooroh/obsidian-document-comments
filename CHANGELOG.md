@@ -5,6 +5,10 @@ matching the pushed tag as that GitHub release's notes, so add an entry here bef
 
 ## Unreleased
 
+## 0.2.1
+
+- Renamed the plugin to **Notion-style Comments** (ID `notion-style-comments`) so it can be listed separately from the original Document Comments. The comment format in your notes is unchanged.
+
 ## 0.2.0
 
 First release of Lucy's fork, based on the original plugin's 0.1.12 by Kyle McDonald.
