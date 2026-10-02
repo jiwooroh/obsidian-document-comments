@@ -8,7 +8,7 @@ The plugin stores each comment inside its Markdown file as an HTML comment. Othe
 
 ## Check this out!
 To use more features like Notion, check out [Notion-selection-toolbar](obsidian://show-plugin?id=notion-selection-toolbar) plugin
-
+![Notion Selection Toolbar](docs/screenshots/ezgif-1ab60f1775882d8.gif)
 
 ## What this fork adds
 
