@@ -6,6 +6,10 @@ Notion-style Comments adds inline comments to Obsidian notes. It shows each comm
 
 The plugin stores each comment inside its Markdown file as an HTML comment. Other editors, version control tools, and agents can read the comment.
 
+## Check this out!
+To use more features like Notion, check out [Notion-selection-toolbar](obsidian://show-plugin?id=notion-selection-toolbar) plugin
+
+
 ## What this fork adds
 
 ### Text formatting toolbar in comments
