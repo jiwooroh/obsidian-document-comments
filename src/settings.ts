@@ -1,4 +1,11 @@
-import { App, PluginSettingTab, Setting, type SettingDefinitionItem, type SettingGroupItem } from "obsidian";
+import {
+	App,
+	type ColorComponent,
+	PluginSettingTab,
+	Setting,
+	type SettingDefinitionItem,
+	type SettingGroupItem,
+} from "obsidian";
 import type DocCommentsPlugin from "./main";
 import {
 	ANNOTATION_STYLES,
@@ -6,6 +13,7 @@ import {
 	DEFAULT_ANNOTATION_STYLE,
 	DEFAULT_HIGHLIGHT_COLOR,
 	DEFAULT_HIGHLIGHT_INTENSITY,
+	defaultHighlightHex,
 	HIGHLIGHT_COLORS,
 } from "./ui/highlight-colors";
 
@@ -292,16 +300,24 @@ export class DocCommentsSettingTab extends PluginSettingTab {
 	private buildColorRow(setting: Setting, theme: "light" | "dark", c: { id: string; label: string }): void {
 		const key = theme === "light" ? "highlightColorsLight" : "highlightColorsDark";
 		const current = this.plugin.settings[key][c.id];
+		// An uncustomized color shows its own theme's default, so the light and
+		// dark rows each preview the palette they actually use.
+		const fallback = (): string => defaultHighlightHex(c.id, theme, this.plugin.settings.highlightIntensity);
 		setting.setName(c.label);
-		setting.addColorPicker((picker) => {
-			if (current) picker.setValue(current);
-			picker.onChange((value) => void this.setCustomColor(key, c.id, value));
+		let picker: ColorComponent | null = null;
+		setting.addColorPicker((p) => {
+			picker = p;
+			p.setValue(current ?? fallback());
+			p.onChange((value) => void this.setCustomColor(key, c.id, value));
 		});
 		setting.addExtraButton((btn) =>
 			btn
 				.setIcon("rotate-ccw")
 				.setTooltip("Reset to default")
-				.onClick(() => void this.setCustomColor(key, c.id, undefined)),
+				.onClick(async () => {
+					await this.setCustomColor(key, c.id, undefined);
+					picker?.setValue(fallback());
+				}),
 		);
 	}
 

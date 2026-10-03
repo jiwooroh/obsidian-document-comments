@@ -50,6 +50,41 @@ export const applyHighlightIntensity = (percent: number): void => {
 	document.body.style.setProperty("--dc-highlight-intensity", `${percent}%`);
 };
 
+/** Notion's palette per theme: `bg` is the highlight fill, `fg` the deeper tone
+ *  (underline, hover, colored comment text). Mirrors the --dc-hl-<id>-pale /
+ *  -border values in styles.css — keep the two in sync. Used to show each
+ *  color's default in the settings color pickers. */
+const PALETTE: Record<string, Record<"light" | "dark", { bg: string; fg: string }>> = {
+	gray: { light: { bg: "#F1F1EF", fg: "#787774" }, dark: { bg: "#3C4144", fg: "#9FA4A8" } },
+	brown: { light: { bg: "#F4EEEE", fg: "#9E6B53" }, dark: { bg: "#4C3E35", fg: "#D49675" } },
+	orange: { light: { bg: "#FBEDE7", fg: "#C86F21" }, dark: { bg: "#553B29", fg: "#E98D36" } },
+	yellow: { light: { bg: "#F4F1E5", fg: "#B57E33" }, dark: { bg: "#4A3E2C", fg: "#C99D46" } },
+	green: { light: { bg: "#EDF3EB", fg: "#458262" }, dark: { bg: "#2F443A", fg: "#72B183" } },
+	blue: { light: { bg: "#E7F3F8", fg: "#347EA9" }, dark: { bg: "#2D4156", fg: "#66AADA" } },
+	purple: { light: { bg: "#F4F0F7", fg: "#9165B0" }, dark: { bg: "#453A5B", fg: "#B098D8" } },
+	pink: { light: { bg: "#F9EEF3", fg: "#C14C8A" }, dark: { bg: "#51384D", fg: "#DE84D1" } },
+	red: { light: { bg: "#FDEBEC", fg: "#D34C47" }, dark: { bg: "#5E3436", fg: "#EA878C" } },
+};
+
+/** The highlight color a palette id gets by default in one theme at a given
+ *  intensity — the same `color-mix(in srgb, bg, fg <intensity>%)` styles.css
+ *  computes, as a hex for a color picker. */
+export const defaultHighlightHex = (id: string, theme: "light" | "dark", intensity: number): string => {
+	const entry = PALETTE[id]?.[theme];
+	if (!entry) return "#000000";
+	const t = Math.min(Math.max(intensity, 0), 100) / 100;
+	const channels = (hex: string): number[] => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+	const from = channels(entry.bg);
+	const to = channels(entry.fg);
+	return (
+		"#" +
+		from
+			.map((c, i) => Math.round(c + ((to[i] ?? c) - c) * t))
+			.map((c) => c.toString(16).padStart(2, "0"))
+			.join("")
+	);
+};
+
 /** Applies (or clears) a hand-picked hex override for individual colors, on
  *  top of the intensity-derived default — same override-on-<body> pattern the
  *  sibling Notion Selection Toolbar plugin uses for its own highlight colors.

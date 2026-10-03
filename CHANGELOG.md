@@ -5,6 +5,10 @@ matching the pushed tag as that GitHub release's notes, so add an entry here bef
 
 ## Unreleased
 
+## 0.2.4
+
+- **Custom highlight colors** settings now show each color's default for its own theme (Notion's light palette in the light rows, dark palette in the dark rows) instead of a blank swatch, and **Reset** updates the swatch right away.
+
 ## 0.2.3
 
 - **Notion highlight colors:** the 9 highlight colors now use Notion's current palette in light and dark mode (background color as the fill, text color for underlines and colored comment text). Default **Highlight intensity** is now 0%, so highlights match Notion exactly; raise it for bolder colors.
