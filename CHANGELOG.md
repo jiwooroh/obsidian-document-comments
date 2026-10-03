@@ -5,6 +5,11 @@ matching the pushed tag as that GitHub release's notes, so add an entry here bef
 
 ## Unreleased
 
+## 0.2.2
+
+- **Annotation style** now has three options: **Highlight** (fill only, no underline), **Underline** (no fill), and **Highlight + underline**. Highlights no longer get an underline unless you choose it, in the editor, Reading view, tables, and PDF export.
+- **Comments in PDF export:** exported PDFs highlight each commented passage with a footnote number and print its comment beside it in a right-hand margin column. Toggle it with the new **Show comments in PDF export** setting or the **Toggle comments in PDF export** command.
+
 ## 0.2.1
 
 - Renamed the plugin to **Notion-style Comments** (ID `notion-style-comments`) so it can be listed separately from the original Document Comments. The comment format in your notes is unchanged.

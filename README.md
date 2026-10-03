@@ -36,7 +36,7 @@ Choose how commented text is marked in your notes.
 
 ### Underline style and per-comment overrides
 
-- **Annotation style**: mark commented text with a filled highlight (the original look) or a quiet underline with no fill.
+- **Annotation style**: mark commented text with a highlight only, an underline only, or both.
 - Use a comment's **⋯** menu to change the color or style of that single comment.
 
 ![Per-comment color and style menu](docs/screenshots/comment-menu.webp)
@@ -48,6 +48,10 @@ Pair this fork with [Notion Selection Toolbar](https://github.com/jiwooroh/notio
 ![Comment button in Notion Selection Toolbar](docs/screenshots/selection-toolbar.png)
 
 If you don't use that plugin, turn on **Show floating button** in this plugin's settings. A small comment button then appears next to any text you select. It is off by default.
+
+### Comments in PDF export
+
+When you export a note to PDF, each commented passage is highlighted with a footnote number, and its comment (with replies) is printed beside it in a right-hand margin column. Turn it off with **Show comments in PDF export** in settings, or run **Toggle comments in PDF export** from the command palette. Resolved comments are included only when **Show resolved comments** is on.
 
 ### Narrow window layout
 

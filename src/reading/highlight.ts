@@ -334,7 +334,7 @@ const offsetOfLine = (lines: string[], lineNo: number): number => {
 
 /** Wrap the first single-text-node occurrence of `needle` in a highlight span.
  *  Uses the element's own document so it works in pop-out windows too. */
-const wrapFirstMatch = (
+export const wrapFirstMatch = (
 	root: HTMLElement,
 	needle: string,
 	id: string,

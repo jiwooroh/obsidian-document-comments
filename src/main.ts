@@ -21,6 +21,7 @@ import { addComment, insertCommentInFile } from "./editor/commands";
 import { findHighlightAtSelection } from "./editor/edits";
 import { findSectionRange, highlightPostProcessor, mapReadingSelection } from "./reading/highlight";
 import { ReadingDeps, ReadingMarginManager } from "./reading/margin";
+import { printNotesPostProcessor } from "./reading/print-notes";
 import { COMMENTS_VIEW_TYPE, CommentsSidebarView, SidebarDeps } from "./ui/sidebar";
 import { CommentModal } from "./ui/comment-modal";
 import { DEFAULT_SETTINGS, DocCommentsSettings, DocCommentsSettingTab } from "./settings";
@@ -110,6 +111,14 @@ export default class DocCommentsPlugin extends Plugin {
 		this.registerMarkdownPostProcessor((el, ctx) => {
 			highlightPostProcessor(el, ctx);
 			this.scheduleReadingRefresh();
+			// PDF export awaits this before printing; it's a no-op everywhere else.
+			return printNotesPostProcessor(el, ctx, {
+				app: this.app,
+				component: this.markdown,
+				printComments: () => this.settings.printComments,
+				showResolved: () => this.settings.showResolved,
+				lightColors: () => this.settings.highlightColorsLight,
+			});
 		});
 		// layout-change / active-leaf-change fire for every way the panel shows or
 		// hides — open, close, collapse the dock, switch tabs — so the inline column
@@ -152,6 +161,12 @@ export default class DocCommentsPlugin extends Plugin {
 			id: "toggle-resolved",
 			name: "Toggle resolved comments",
 			callback: () => void this.toggleResolved(),
+		});
+
+		this.addCommand({
+			id: "toggle-print-comments",
+			name: "Toggle comments in PDF export",
+			callback: () => void this.togglePrintComments(),
 		});
 
 		this.addCommand({
@@ -328,6 +343,12 @@ export default class DocCommentsPlugin extends Plugin {
 		await this.saveSettings();
 		this.refreshEditors();
 		new Notice(this.settings.showResolved ? "Resolved comments shown" : "Resolved comments hidden");
+	}
+
+	private async togglePrintComments(): Promise<void> {
+		this.settings.printComments = !this.settings.printComments;
+		await this.saveSettings();
+		new Notice(this.settings.printComments ? "Comments included in PDF export" : "Comments left out of PDF export");
 	}
 
 	/** Re-applies the chosen palette color, the intensity slider, any custom

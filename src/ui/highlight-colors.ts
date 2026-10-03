@@ -64,8 +64,8 @@ export const applyCustomHighlightColors = (light: Record<string, string>, dark: 
 };
 
 /** How a comment's anchor is marked in the text: a filled highlight (the
- *  default, always has been), or just the quiet underline with no background
- *  fill — for people who find a page full of colored blocks distracting. */
+ *  default), just a quiet underline with no fill — for people who find a page
+ *  full of colored blocks distracting — or both together. */
 export type AnnotationStyleDef = {
 	id: string;
 	label: string;
@@ -74,16 +74,16 @@ export type AnnotationStyleDef = {
 export const ANNOTATION_STYLES: AnnotationStyleDef[] = [
 	{ id: "highlight", label: "Highlight" },
 	{ id: "underline", label: "Underline" },
+	{ id: "both", label: "Highlight + underline" },
 ];
 
 export const DEFAULT_ANNOTATION_STYLE = "highlight";
 
-/** Toggles the background fill on/off for every comment anchor at once — a
- *  plain class rather than a CSS variable, since both the property name and
- *  the "off" value are fixed, not computed (see styles.css's
- *  `body.dc-annotation-underline` rule). The underline (border-bottom) itself
- *  is unaffected either way, and hovering a highlight still shows its
- *  momentary active-color regardless of mode. */
+/** Sets the plugin-wide anchor style with a body class (see styles.css's
+ *  `body.dc-annotation-*` rules): no class means fill only, `underline` drops
+ *  the fill and shows the underline, `both` shows both. Hovering an anchor
+ *  still shows its momentary active color in every mode. */
 export const applyAnnotationStyle = (style: string): void => {
 	document.body.classList.toggle("dc-annotation-underline", style === "underline");
+	document.body.classList.toggle("dc-annotation-both", style === "both");
 };

@@ -20,6 +20,8 @@ export type DocCommentsSettings = {
 	allowEmptyComments: boolean;
 	/** Show a floating button on text selection. */
 	showFloatingButton: boolean;
+	/** Include comments as numbered footnotes when exporting a note to PDF. */
+	printComments: boolean;
 	/** Palette id (see highlight-colors.ts) for the in-text comment highlight. */
 	highlightColor: string;
 	/** % of each color's own tone mixed into its pale base — shared by all 9. */
@@ -28,9 +30,8 @@ export type DocCommentsSettings = {
 	 *  intensity-derived default for that one color. Separate per theme. */
 	highlightColorsLight: Record<string, string>;
 	highlightColorsDark: Record<string, string>;
-	/** How a comment's anchor is marked in the text: "highlight" (filled
-	 *  background, the original look) or "underline" (just the quiet
-	 *  underline, no fill). See ui/highlight-colors.ts. */
+	/** How a comment's anchor is marked in the text: "highlight" (fill only),
+	 *  "underline" (no fill), or "both". See ui/highlight-colors.ts. */
 	annotationStyle: string;
 };
 
@@ -40,6 +41,7 @@ export const DEFAULT_SETTINGS: DocCommentsSettings = {
 	showResolved: false,
 	allowEmptyComments: false,
 	showFloatingButton: false,
+	printComments: true,
 	highlightColor: DEFAULT_HIGHLIGHT_COLOR,
 	highlightIntensity: DEFAULT_HIGHLIGHT_INTENSITY,
 	highlightColorsLight: {},
@@ -114,9 +116,16 @@ const SETTING_META: ReadonlyArray<{
 		control: { type: "toggle" },
 	},
 	{
+		key: "printComments",
+		name: "Show comments in PDF export",
+		desc: "Include comments as numbered footnotes under each paragraph when you export a note to PDF. Resolved comments are included only when Show resolved comments is on.",
+		aliases: ["pdf", "export", "print", "footnotes"],
+		control: { type: "toggle" },
+	},
+	{
 		key: "annotationStyle",
 		name: "Annotation style",
-		desc: 'Default marking for commented text: a filled "Highlight" (the original look), or just a quiet "Underline" with no background fill. Any single comment can override this from its "..." menu → Change style.',
+		desc: 'How commented text is marked: "Highlight" (fill only), "Underline" (no fill), or "Highlight + underline". Any single comment can override this from its "..." menu → Change style.',
 		aliases: ["annotation", "underline", "highlight style", "comment marker"],
 		control: { type: "dropdown", options: ANNOTATION_STYLE_OPTIONS },
 	},
@@ -317,6 +326,7 @@ export class DocCommentsSettingTab extends PluginSettingTab {
 		else if (key === "showResolved") this.plugin.settings.showResolved = Boolean(value);
 		else if (key === "allowEmptyComments") this.plugin.settings.allowEmptyComments = Boolean(value);
 		else if (key === "showFloatingButton") this.plugin.settings.showFloatingButton = Boolean(value);
+		else if (key === "printComments") this.plugin.settings.printComments = Boolean(value);
 		else if (key === "highlightColor") this.plugin.settings.highlightColor = String(value);
 		else if (key === "highlightIntensity") this.plugin.settings.highlightIntensity = Number(value);
 		else if (key === "annotationStyle") this.plugin.settings.annotationStyle = String(value);

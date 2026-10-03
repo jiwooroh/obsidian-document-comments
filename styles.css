@@ -174,22 +174,28 @@ body.theme-dark {
 	margin-right: auto;
 }
 
-/* The highlighted span in the text. Border color is blended toward
-   transparent (not the full-strength "-border" tone), closer to Notion's own
-   quiet comment-anchor mark. */
+/* The highlighted span in the text: fill only by default. The underline slot is
+   always reserved (transparent) so switching styles never shifts the text; the
+   underline/both styles below color it, blended toward transparent (not the
+   full-strength "-border" tone), closer to Notion's own quiet anchor mark. */
 .doc-comment-span {
+	--dc-underline: color-mix(in srgb, var(--dc-highlight-border) 55%, transparent);
 	background-color: var(--dc-highlight-bg);
-	border-bottom: 2px solid color-mix(in srgb, var(--dc-highlight-border) 55%, transparent);
+	border-bottom: 2px solid transparent;
 	border-radius: 2px;
 	cursor: text;
 	transition: background-color 120ms ease;
 }
-/* "Underline" annotation style (see applyAnnotationStyle in
-   highlight-colors.ts): drop the fill, keep the border-bottom. Placed before
-   is-active below so hovering still shows the momentary highlight color
-   regardless of mode — same specificity, source order decides. */
+/* "Underline" / "Highlight + underline" annotation styles (see
+   applyAnnotationStyle in highlight-colors.ts). Placed before is-active below
+   so hovering still shows the momentary highlight color regardless of mode —
+   same specificity, source order decides. */
 body.dc-annotation-underline .doc-comment-span {
 	background-color: transparent;
+	border-bottom-color: var(--dc-underline);
+}
+body.dc-annotation-both .doc-comment-span {
+	border-bottom-color: var(--dc-underline);
 }
 /* Per-comment style override (the card's "Change style" menu item): forces this
    ONE anchor to a highlight or underline regardless of the plugin-wide default
@@ -198,9 +204,15 @@ body.dc-annotation-underline .doc-comment-span {
    favor either way. Mirrors .dc-color-* below for per-comment color. */
 body .doc-comment-span.dc-style-highlight {
 	background-color: var(--dc-highlight-bg);
+	border-bottom-color: transparent;
 }
 body .doc-comment-span.dc-style-underline {
 	background-color: transparent;
+	border-bottom-color: var(--dc-underline);
+}
+body .doc-comment-span.dc-style-both {
+	background-color: var(--dc-highlight-bg);
+	border-bottom-color: var(--dc-underline);
 }
 /* Per-comment color override (set via the card's "Change color" menu item):
    re-point this ONE element's --dc-highlight-* at a specific palette entry.
@@ -208,52 +220,62 @@ body .doc-comment-span.dc-style-underline {
    here wins over the body-wide default without duplicating the color
    properties themselves — is-active / is-resolved below still take effect on
    top, unchanged. */
-.doc-comment-span.dc-color-theme {
+.doc-comment-span.dc-color-theme,
+.dc-print-note.dc-color-theme {
 	--dc-highlight-bg: var(--dc-hl-theme);
 	--dc-highlight-bg-active: var(--dc-hl-theme-active);
 	--dc-highlight-border: var(--dc-hl-theme-border);
 }
-.doc-comment-span.dc-color-yellow {
+.doc-comment-span.dc-color-yellow,
+.dc-print-note.dc-color-yellow {
 	--dc-highlight-bg: var(--dc-hl-yellow);
 	--dc-highlight-bg-active: var(--dc-hl-yellow-active);
 	--dc-highlight-border: var(--dc-hl-yellow-border);
 }
-.doc-comment-span.dc-color-green {
+.doc-comment-span.dc-color-green,
+.dc-print-note.dc-color-green {
 	--dc-highlight-bg: var(--dc-hl-green);
 	--dc-highlight-bg-active: var(--dc-hl-green-active);
 	--dc-highlight-border: var(--dc-hl-green-border);
 }
-.doc-comment-span.dc-color-blue {
+.doc-comment-span.dc-color-blue,
+.dc-print-note.dc-color-blue {
 	--dc-highlight-bg: var(--dc-hl-blue);
 	--dc-highlight-bg-active: var(--dc-hl-blue-active);
 	--dc-highlight-border: var(--dc-hl-blue-border);
 }
-.doc-comment-span.dc-color-purple {
+.doc-comment-span.dc-color-purple,
+.dc-print-note.dc-color-purple {
 	--dc-highlight-bg: var(--dc-hl-purple);
 	--dc-highlight-bg-active: var(--dc-hl-purple-active);
 	--dc-highlight-border: var(--dc-hl-purple-border);
 }
-.doc-comment-span.dc-color-pink {
+.doc-comment-span.dc-color-pink,
+.dc-print-note.dc-color-pink {
 	--dc-highlight-bg: var(--dc-hl-pink);
 	--dc-highlight-bg-active: var(--dc-hl-pink-active);
 	--dc-highlight-border: var(--dc-hl-pink-border);
 }
-.doc-comment-span.dc-color-red {
+.doc-comment-span.dc-color-red,
+.dc-print-note.dc-color-red {
 	--dc-highlight-bg: var(--dc-hl-red);
 	--dc-highlight-bg-active: var(--dc-hl-red-active);
 	--dc-highlight-border: var(--dc-hl-red-border);
 }
-.doc-comment-span.dc-color-orange {
+.doc-comment-span.dc-color-orange,
+.dc-print-note.dc-color-orange {
 	--dc-highlight-bg: var(--dc-hl-orange);
 	--dc-highlight-bg-active: var(--dc-hl-orange-active);
 	--dc-highlight-border: var(--dc-hl-orange-border);
 }
-.doc-comment-span.dc-color-brown {
+.doc-comment-span.dc-color-brown,
+.dc-print-note.dc-color-brown {
 	--dc-highlight-bg: var(--dc-hl-brown);
 	--dc-highlight-bg-active: var(--dc-hl-brown-active);
 	--dc-highlight-border: var(--dc-hl-brown-border);
 }
-.doc-comment-span.dc-color-gray {
+.doc-comment-span.dc-color-gray,
+.dc-print-note.dc-color-gray {
 	--dc-highlight-bg: var(--dc-hl-gray);
 	--dc-highlight-bg-active: var(--dc-hl-gray-active);
 	--dc-highlight-border: var(--dc-hl-gray-border);
@@ -318,6 +340,12 @@ body .doc-comment-span.dc-style-underline {
    into those cells and exposes non-mutating CSS Custom Highlight ranges. */
 ::highlight(notion-style-comments-table) {
 	background-color: var(--dc-highlight-bg);
+}
+body.dc-annotation-underline ::highlight(notion-style-comments-table) {
+	background-color: transparent;
+	text-decoration: underline;
+}
+body.dc-annotation-both ::highlight(notion-style-comments-table) {
 	text-decoration: underline;
 }
 ::highlight(notion-style-comments-table-resolved) {
@@ -1282,3 +1310,127 @@ body .doc-comment-span.dc-style-underline {
 
 
 
+
+/* ---------- PDF export ----------
+   Footnote numbers + comment threads in a right margin. reading/print-notes.ts adds them
+   only inside Obsidian's "Export to PDF" render (never on screen), and only while
+   "Show comments in PDF export" is on. */
+/* Keep highlight fills — print drops background colors by default. */
+.doc-comment-span {
+	-webkit-print-color-adjust: exact;
+	print-color-adjust: exact;
+}
+
+.dc-print-ref {
+	display: inline;
+	margin-left: 1px;
+	font-size: 0.7em;
+	font-weight: 600;
+	color: var(--text-muted);
+}
+
+/* Margin column: the content narrows by --dc-print-margin and each note floats
+   into that space beside its highlight. A float's margin box nets to zero width
+   (width + left gap − margin-right), so it never shortens the text's lines;
+   clear: right stacks notes that would otherwise overlap. */
+.markdown-preview-view.dc-print-has-notes {
+	--dc-print-margin: 2.4in;
+	padding-right: var(--dc-print-margin) !important;
+}
+
+.dc-print-has-notes .dc-print-note--margin {
+	float: right;
+	clear: right;
+	width: calc(var(--dc-print-margin) - 0.25in);
+	margin: 0 calc(-1 * var(--dc-print-margin)) 0.4em 0.25in;
+	padding-left: 0.6em;
+	/* Same fill as the comment's highlight (per-comment color via .dc-color-*). */
+	border-left: 4px solid var(--dc-highlight-bg);
+	-webkit-print-color-adjust: exact;
+	print-color-adjust: exact;
+	font-size: 0.72rem;
+	font-weight: normal;
+	font-style: normal;
+	line-height: 1.4;
+	text-align: left;
+	text-indent: 0;
+	white-space: normal;
+	color: var(--text-muted);
+	break-inside: avoid;
+}
+
+/* Print-time layout (print-layout.ts): notes leave the text flow and sit at
+   measured positions in the margin column, centered on crowded highlights. */
+.dc-print-has-notes.dc-print-laid-out {
+	position: relative;
+}
+
+.dc-print-laid-out .dc-print-note--margin {
+	position: absolute;
+	right: 0;
+	float: none;
+	margin: 0;
+}
+
+/* Fallback list for threads whose text couldn't be located in the export. */
+.dc-print-notes {
+	display: block;
+	margin: 0.4em 0 1em;
+	padding: 0.5em 0.8em;
+	border-left: 2px solid var(--background-modifier-border);
+	font-size: 0.8em;
+	line-height: 1.45;
+	color: var(--text-muted);
+	break-inside: avoid;
+}
+
+.dc-print-note {
+	display: flex;
+	gap: 0.6em;
+}
+
+.dc-print-notes .dc-print-note + .dc-print-note {
+	margin-top: 0.5em;
+}
+
+.dc-print-note__num {
+	flex: none;
+	min-width: 1.2em;
+	font-weight: 600;
+}
+
+.dc-print-note__body {
+	flex: 1;
+	min-width: 0;
+}
+
+.dc-print-note__quote {
+	font-style: italic;
+}
+
+.dc-print-note__text + .dc-print-note__text {
+	margin-top: 0.3em;
+}
+
+/* Rendered comment Markdown: keep it inline-ish, no paragraph gaps. */
+.dc-print-note__text > :first-child {
+	margin-top: 0;
+}
+
+.dc-print-note__text > :last-child {
+	margin-bottom: 0;
+}
+
+.dc-print-note__text p {
+	margin: 0;
+}
+
+.dc-print-note__text ul,
+.dc-print-note__text ol {
+	margin: 0.15em 0;
+	padding-left: 1.1em;
+}
+
+.dc-print-note.is-resolved {
+	opacity: 0.6;
+}

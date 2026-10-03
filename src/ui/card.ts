@@ -33,7 +33,7 @@ export type CardCallbacks = {
 	/** Set (colorId) or clear (undefined) this comment's highlight color override. */
 	setColor: (id: string, colorId: string | undefined) => void;
 	/** Set (styleId) or clear (undefined) this comment's annotation-style override
-	 *  ("highlight" or "underline" — see ui/highlight-colors.ts). */
+	 *  ("highlight", "underline", or "both" — see ui/highlight-colors.ts). */
 	setStyle: (id: string, styleId: string | undefined) => void;
 	remove: (id: string) => void;
 	editEntry: (id: string, index: number, text: string) => void;
@@ -713,8 +713,8 @@ export class Card {
 	}
 
 	/** Dropdown for the annotation-style override of this comment's anchor: follow
-	 *  the plugin-wide default, or force this one comment to a highlight or
-	 *  underline regardless of it. Reuses the .dc-menu shell (text options) rather
+	 *  the plugin-wide default, or force this one comment to a highlight,
+	 *  underline, or both regardless of it. Reuses the .dc-menu shell (text options) rather
 	 *  than openColorPicker()'s swatches, since these are named styles, not colors. */
 	private openStylePicker(anchor: HTMLElement): void {
 		const doc = this.el.ownerDocument;
