@@ -59,6 +59,10 @@ When the window is too narrow for the margin, comment cards hide and appear when
 
 ![Narrow window layout](docs/screenshots/narrow-layout.png)
 
+### Hide author names
+
+Turn off **Show author names** in settings to hide who wrote each comment and reply, on comment cards and in highlight hover previews.
+
 ### Smaller touches
 
 - Comment boxes grow as you type.

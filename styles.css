@@ -629,6 +629,10 @@ body.dc-annotation-both ::highlight(notion-style-comments-table) {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+/* "Show author names" off (body class set by applyAuthorVisibility in main.ts). */
+body.dc-hide-author .dc-entry__author {
+	display: none;
+}
 .dc-entry__time {
 	color: var(--text-muted);
 	font-size: var(--font-smaller);

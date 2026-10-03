@@ -26,6 +26,8 @@ export type DocCommentsSettings = {
 	showResolved: boolean;
 	/** Allow a blank comment to persist with an empty comment card. */
 	allowEmptyComments: boolean;
+	/** Show who wrote each comment and reply. */
+	showAuthor: boolean;
 	/** Show a floating button on text selection. */
 	showFloatingButton: boolean;
 	/** Include comments as numbered footnotes when exporting a note to PDF. */
@@ -49,6 +51,7 @@ export const DEFAULT_SETTINGS: DocCommentsSettings = {
 	showResolved: false,
 	allowEmptyComments: false,
 	showFloatingButton: false,
+	showAuthor: true,
 	printComments: true,
 	highlightColor: DEFAULT_HIGHLIGHT_COLOR,
 	highlightIntensity: DEFAULT_HIGHLIGHT_INTENSITY,
@@ -100,6 +103,13 @@ const SETTING_META: ReadonlyArray<{
 		name: "Show comments",
 		desc: "Show the comment column. You can also toggle this from the ribbon or the command palette.",
 		aliases: ["comment column", "margin comments"],
+		control: { type: "toggle" },
+	},
+	{
+		key: "showAuthor",
+		name: "Show author names",
+		desc: "Show who wrote each comment and reply on comment cards and in highlight hover previews.",
+		aliases: ["author", "name", "commenter"],
 		control: { type: "toggle" },
 	},
 	{
@@ -343,6 +353,7 @@ export class DocCommentsSettingTab extends PluginSettingTab {
 		else if (key === "allowEmptyComments") this.plugin.settings.allowEmptyComments = Boolean(value);
 		else if (key === "showFloatingButton") this.plugin.settings.showFloatingButton = Boolean(value);
 		else if (key === "printComments") this.plugin.settings.printComments = Boolean(value);
+		else if (key === "showAuthor") this.plugin.settings.showAuthor = Boolean(value);
 		else if (key === "highlightColor") this.plugin.settings.highlightColor = String(value);
 		else if (key === "highlightIntensity") this.plugin.settings.highlightIntensity = Number(value);
 		else if (key === "annotationStyle") this.plugin.settings.annotationStyle = String(value);
@@ -351,5 +362,6 @@ export class DocCommentsSettingTab extends PluginSettingTab {
 		if (colorKeys.includes(key)) this.plugin.refreshHighlightColor();
 		if (key !== "author" && !colorKeys.includes(key)) this.plugin.refreshEditors();
 		if (key === "showComments") this.plugin.updateRibbon();
+		if (key === "showAuthor") this.plugin.applyAuthorVisibility();
 	}
 }

@@ -22,6 +22,7 @@ import { findHighlightAtSelection } from "./editor/edits";
 import { findSectionRange, highlightPostProcessor, mapReadingSelection } from "./reading/highlight";
 import { ReadingDeps, ReadingMarginManager } from "./reading/margin";
 import { printNotesPostProcessor } from "./reading/print-notes";
+import { setPreviewShowsAuthor } from "./format/preview";
 import { COMMENTS_VIEW_TYPE, CommentsSidebarView, SidebarDeps } from "./ui/sidebar";
 import { CommentModal } from "./ui/comment-modal";
 import { DEFAULT_SETTINGS, DocCommentsSettings, DocCommentsSettingTab } from "./settings";
@@ -53,6 +54,7 @@ export default class DocCommentsPlugin extends Plugin {
 		applyHighlightIntensity(this.settings.highlightIntensity);
 		applyCustomHighlightColors(this.settings.highlightColorsLight, this.settings.highlightColorsDark);
 		applyAnnotationStyle(this.settings.annotationStyle);
+		this.applyAuthorVisibility();
 
 		this.registerEditorExtension([
 			commentField,
@@ -351,6 +353,18 @@ export default class DocCommentsPlugin extends Plugin {
 		new Notice(this.settings.printComments ? "Comments included in PDF export" : "Comments left out of PDF export");
 	}
 
+	/** Hide or show author names: a body class for the cards (see styles.css)
+	 *  and a flag for hover previews, which open Reading views re-render to
+	 *  pick up (editors rebuild theirs on the next edit). */
+	applyAuthorVisibility(): void {
+		activeDocument.body.toggleClass("dc-hide-author", !this.settings.showAuthor);
+		setPreviewShowsAuthor(this.settings.showAuthor);
+		this.app.workspace.getLeavesOfType("markdown").forEach((leaf) => {
+			if (leaf.view instanceof MarkdownView && leaf.view.getMode() === "preview")
+				leaf.view.previewMode.rerender(true);
+		});
+	}
+
 	/** Re-applies the chosen palette color, the intensity slider, any custom
 	 *  per-color overrides, and the highlight/underline annotation style.
 	 *  Called by the settings tab after any of those change, and on theme
@@ -444,6 +458,7 @@ export default class DocCommentsPlugin extends Plugin {
 		this.readingManager?.destroy();
 		this.floatingButtonManager?.destroy();
 		this.textToolbar?.destroy();
+		activeDocument.body.removeClass("dc-hide-author");
 	}
 
 	private authorName(): string {

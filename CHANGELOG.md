@@ -5,6 +5,10 @@ matching the pushed tag as that GitHub release's notes, so add an entry here bef
 
 ## Unreleased
 
+## 0.2.6
+
+- **Show author names** setting: turn it off to hide who wrote each comment and reply, on comment cards and in highlight hover previews. On by default.
+
 ## 0.2.5
 
 - **Highlight colors** updated to Notion's current palette: background variants as the fill and bold text variants as the tone, in light and dark mode. **Highlight intensity** still mixes the tone into the fill (0% = Notion's exact color).
