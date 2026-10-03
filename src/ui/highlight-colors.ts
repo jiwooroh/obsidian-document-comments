@@ -55,15 +55,15 @@ export const applyHighlightIntensity = (percent: number): void => {
  *  -border values in styles.css — keep the two in sync. Used to show each
  *  color's default in the settings color pickers. */
 const PALETTE: Record<string, Record<"light" | "dark", { bg: string; fg: string }>> = {
-	gray: { light: { bg: "#F1F1EF", fg: "#787774" }, dark: { bg: "#3C4144", fg: "#9FA4A8" } },
-	brown: { light: { bg: "#F4EEEE", fg: "#9E6B53" }, dark: { bg: "#4C3E35", fg: "#D49675" } },
-	orange: { light: { bg: "#FBEDE7", fg: "#C86F21" }, dark: { bg: "#553B29", fg: "#E98D36" } },
-	yellow: { light: { bg: "#F4F1E5", fg: "#B57E33" }, dark: { bg: "#4A3E2C", fg: "#C99D46" } },
-	green: { light: { bg: "#EDF3EB", fg: "#458262" }, dark: { bg: "#2F443A", fg: "#72B183" } },
-	blue: { light: { bg: "#E7F3F8", fg: "#347EA9" }, dark: { bg: "#2D4156", fg: "#66AADA" } },
-	purple: { light: { bg: "#F4F0F7", fg: "#9165B0" }, dark: { bg: "#453A5B", fg: "#B098D8" } },
-	pink: { light: { bg: "#F9EEF3", fg: "#C14C8A" }, dark: { bg: "#51384D", fg: "#DE84D1" } },
-	red: { light: { bg: "#FDEBEC", fg: "#D34C47" }, dark: { bg: "#5E3436", fg: "#EA878C" } },
+	gray: { light: { bg: "#F1F1EF", fg: "#787774" }, dark: { bg: "#2F2F2F", fg: "#9B9B9B" } },
+	brown: { light: { bg: "#F3EEEE", fg: "#976D57" }, dark: { bg: "#46332A", fg: "#B28773" } },
+	orange: { light: { bg: "#F8ECDF", fg: "#CC782F" }, dark: { bg: "#573C27", fg: "#BD8052" } },
+	yellow: { light: { bg: "#FAF3DE", fg: "#C29343" }, dark: { bg: "#53442C", fg: "#C29A56" } },
+	green: { light: { bg: "#EEF3EC", fg: "#548164" }, dark: { bg: "#2A3C31", fg: "#659C75" } },
+	blue: { light: { bg: "#E9F3F7", fg: "#487CA5" }, dark: { bg: "#1E394C", fg: "#6786C4" } },
+	purple: { light: { bg: "#F6F3F9", fg: "#8A67AB" }, dark: { bg: "#3A2E47", fg: "#956ACD" } },
+	pink: { light: { bg: "#F8F1F5", fg: "#B35388" }, dark: { bg: "#492E3B", fg: "#C25F94" } },
+	red: { light: { bg: "#FAECEC", fg: "#C4554D" }, dark: { bg: "#4D302B", fg: "#CF5D57" } },
 };
 
 /** The highlight color a palette id gets by default in one theme at a given

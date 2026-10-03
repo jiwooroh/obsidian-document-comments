@@ -20,11 +20,11 @@ body {
 	--dc-highlight-bg: var(--dc-hl-theme);
 	--dc-highlight-bg-active: var(--dc-hl-theme-active);
 	--dc-highlight-border: var(--dc-hl-theme-border);
-	/* How much of each color's own tone mixes into its pale base (see the
-	   *-pale variables below) — 0% (the default) is Notion's exact fill, higher values
-	   read as a bolder/more saturated highlight. Overridden inline on <body> by
-	   the "Highlight intensity" slider in settings (applyHighlightIntensity()
-	   in highlight-colors.ts). */
+	/* How much of each color's own tone mixes into its pale fill (see the
+	   *-pale variables below) — 0% (the default) is Notion's exact fill, higher
+	   values read as a bolder/more saturated highlight. Overridden inline on
+	   <body> by the "Highlight intensity" slider in settings
+	   (applyHighlightIntensity() in highlight-colors.ts). */
 	--dc-highlight-intensity: 0%;
 }
 .cm-editor.dc-narrow,
@@ -37,57 +37,68 @@ body {
    chosen, so switching the setting swaps these without touching the handful
    of rules that actually paint the highlight. */
 :root {
-	/* Theme default — derived from Obsidian's own ==highlight== variable
-	   (--text-highlight-bg) rather than a hardcoded hex, so it automatically
-	   matches whatever the active theme (or a Style Settings override) uses
-	   elsewhere in the vault, in both light and dark. Border/active are mixed
-	   in from --text-normal since Obsidian doesn't expose those for its own
-	   highlight — no separate .theme-dark block needed, both anchors already
-	   flip with the theme. */
+	/* Notion's light palette: *-pale is the "background" variant (the highlight
+	   fill at 0% intensity), *-border the "bold" text variant (underline, hover
+	   tint, colored comment text, and what intensity mixes in). Mirrored in
+	   PALETTE in ui/highlight-colors.ts — keep the two in sync. */
+	--dc-hl-gray-pale: #F1F1EF;
+	--dc-hl-gray-border: #787774;
+	--dc-hl-brown-pale: #F3EEEE;
+	--dc-hl-brown-border: #976D57;
+	--dc-hl-orange-pale: #F8ECDF;
+	--dc-hl-orange-border: #CC782F;
+	--dc-hl-yellow-pale: #FAF3DE;
+	--dc-hl-yellow-border: #C29343;
+	--dc-hl-green-pale: #EEF3EC;
+	--dc-hl-green-border: #548164;
+	--dc-hl-blue-pale: #E9F3F7;
+	--dc-hl-blue-border: #487CA5;
+	--dc-hl-purple-pale: #F6F3F9;
+	--dc-hl-purple-border: #8A67AB;
+	--dc-hl-pink-pale: #F8F1F5;
+	--dc-hl-pink-border: #B35388;
+	--dc-hl-red-pale: #FAECEC;
+	--dc-hl-red-border: #C4554D;
+}
+body.theme-dark {
+	/* Notion's dark palette, same roles. */
+	--dc-hl-gray-pale: #2F2F2F;
+	--dc-hl-gray-border: #9B9B9B;
+	--dc-hl-brown-pale: #46332A;
+	--dc-hl-brown-border: #B28773;
+	--dc-hl-orange-pale: #573C27;
+	--dc-hl-orange-border: #BD8052;
+	--dc-hl-yellow-pale: #53442C;
+	--dc-hl-yellow-border: #C29A56;
+	--dc-hl-green-pale: #2A3C31;
+	--dc-hl-green-border: #659C75;
+	--dc-hl-blue-pale: #1E394C;
+	--dc-hl-blue-border: #6786C4;
+	--dc-hl-purple-pale: #3A2E47;
+	--dc-hl-purple-border: #956ACD;
+	--dc-hl-pink-pale: #492E3B;
+	--dc-hl-pink-border: #C25F94;
+	--dc-hl-red-pale: #4D302B;
+	--dc-hl-red-border: #CF5D57;
+}
+/* What each .dc-color-<id> / swatch actually paints: the pale fill mixed with
+   this color's own tone by --dc-highlight-intensity (settings slider, default
+   0% = Notion's exact fill; higher = bolder). MUST live on `body` (where the
+   intensity variable is declared), not :root — a var() resolves on the SAME
+   element, and :root can't see a variable set only on its descendant body.
+   Re-resolves live on every paint, so dragging the slider updates applied
+   highlights with no JS re-run. A custom per-color hex from settings
+   overrides --dc-hl-<id> directly on <body> instead (see
+   applyCustomHighlightColors() in highlight-colors.ts), skipping the mix. */
+body {
+	/* Theme default — Obsidian's own ==highlight== color (--text-highlight-bg),
+	   so it matches whatever the active theme uses elsewhere in the vault, in
+	   light and dark. Declared on body because Obsidian's theme variables live
+	   there. Border/active are mixed in from --text-normal since Obsidian
+	   doesn't expose those for its own highlight. */
 	--dc-hl-theme: var(--text-highlight-bg);
 	--dc-hl-theme-border: color-mix(in srgb, var(--text-highlight-bg), var(--text-normal) 45%);
 	--dc-hl-theme-active: color-mix(in srgb, var(--text-highlight-bg), var(--text-normal) 20%);
-
-	/* Notion's light palette: background color = highlight fill, text color =
-	   the deeper tone (underline, hover, colored comment text).
-	   Fixed, never-changing pale Notion wash for each color — the 0%-intensity
-	   anchor that --dc-hl-<id> below mixes the border tone into. Kept separate
-	   from --dc-hl-<id> itself so a user's custom hex override (set in
-	   settings) can replace just that computed result without needing to also
-	   know/preserve this base. */
-	--dc-hl-gray-pale: #F1F1EF;
-	--dc-hl-gray-border: #787774;
-	--dc-hl-brown-pale: #F4EEEE;
-	--dc-hl-brown-border: #9E6B53;
-	--dc-hl-orange-pale: #FBEDE7;
-	--dc-hl-orange-border: #C86F21;
-	--dc-hl-yellow-pale: #F4F1E5;
-	--dc-hl-yellow-border: #B57E33;
-	--dc-hl-green-pale: #EDF3EB;
-	--dc-hl-green-border: #458262;
-	--dc-hl-blue-pale: #E7F3F8;
-	--dc-hl-blue-border: #347EA9;
-	--dc-hl-purple-pale: #F4F0F7;
-	--dc-hl-purple-border: #9165B0;
-	--dc-hl-pink-pale: #F9EEF3;
-	--dc-hl-pink-border: #C14C8A;
-	--dc-hl-red-pale: #FDEBEC;
-	--dc-hl-red-border: #D34C47;
-}
-/* The actual background each .dc-color-<id> / swatch uses: the pale base mixed
-   with this color's own tone, by --dc-highlight-intensity (settings slider,
-   default 0% — Notion's exact fill). MUST live on `body` (where --dc-highlight-intensity is
-   declared above), not :root — a var() reference resolves using the SAME
-   element's cascaded value, and :root (html) can never see a variable only
-   set on its descendant body, however the intensity var got there (default or
-   the settings slider's inline override). Re-resolves live on every paint, so
-   dragging the slider updates already-applied highlights with no JS re-run
-   needed. A custom per-color hex from settings overrides this directly on
-   <body> instead (see applyCustomHighlightColors() in highlight-colors.ts),
-   skipping the mix entirely for that one color. One unconditional block
-   (no separate .theme-dark variant needed) since it just reads whichever
-   *-pale/*-border cascade already resolved to at body — light or dark. */
-body {
 	--dc-hl-gray: color-mix(in srgb, var(--dc-hl-gray-pale), var(--dc-hl-gray-border) var(--dc-highlight-intensity));
 	--dc-hl-brown: color-mix(in srgb, var(--dc-hl-brown-pale), var(--dc-hl-brown-border) var(--dc-highlight-intensity));
 	--dc-hl-orange: color-mix(in srgb, var(--dc-hl-orange-pale), var(--dc-hl-orange-border) var(--dc-highlight-intensity));
@@ -97,10 +108,8 @@ body {
 	--dc-hl-purple: color-mix(in srgb, var(--dc-hl-purple-pale), var(--dc-hl-purple-border) var(--dc-highlight-intensity));
 	--dc-hl-pink: color-mix(in srgb, var(--dc-hl-pink-pale), var(--dc-hl-pink-border) var(--dc-highlight-intensity));
 	--dc-hl-red: color-mix(in srgb, var(--dc-hl-red-pale), var(--dc-hl-red-border) var(--dc-highlight-intensity));
-	/* Derived once per color: a stronger tone for the is-active / flash states,
-	   mixed from the same two anchors above so it can't drift out of sync with
-	   them. Also body-scoped for the same reason — it depends on --dc-hl-<id>
-	   above, which is itself body-scoped now. */
+	/* A stronger tone for the hover / flash states, mixed from the same two
+	   anchors so it can't drift out of sync with them. */
 	--dc-hl-gray-active: color-mix(in srgb, var(--dc-hl-gray), var(--dc-hl-gray-border) 35%);
 	--dc-hl-brown-active: color-mix(in srgb, var(--dc-hl-brown), var(--dc-hl-brown-border) 35%);
 	--dc-hl-orange-active: color-mix(in srgb, var(--dc-hl-orange), var(--dc-hl-orange-border) 35%);
@@ -110,27 +119,6 @@ body {
 	--dc-hl-purple-active: color-mix(in srgb, var(--dc-hl-purple), var(--dc-hl-purple-border) 35%);
 	--dc-hl-pink-active: color-mix(in srgb, var(--dc-hl-pink), var(--dc-hl-pink-border) 35%);
 	--dc-hl-red-active: color-mix(in srgb, var(--dc-hl-red), var(--dc-hl-red-border) 35%);
-}
-body.theme-dark {
-	/* Notion's dark palette: background color = fill, text color = deeper tone. */
-	--dc-hl-gray-pale: #3C4144;
-	--dc-hl-gray-border: #9FA4A8;
-	--dc-hl-brown-pale: #4C3E35;
-	--dc-hl-brown-border: #D49675;
-	--dc-hl-orange-pale: #553B29;
-	--dc-hl-orange-border: #E98D36;
-	--dc-hl-yellow-pale: #4A3E2C;
-	--dc-hl-yellow-border: #C99D46;
-	--dc-hl-green-pale: #2F443A;
-	--dc-hl-green-border: #72B183;
-	--dc-hl-blue-pale: #2D4156;
-	--dc-hl-blue-border: #66AADA;
-	--dc-hl-purple-pale: #453A5B;
-	--dc-hl-purple-border: #B098D8;
-	--dc-hl-pink-pale: #51384D;
-	--dc-hl-pink-border: #DE84D1;
-	--dc-hl-red-pale: #5E3436;
-	--dc-hl-red-border: #EA878C;
 }
 
 /* Layout is keyed on a `dc-has` class set on the editor / reading-view container.
