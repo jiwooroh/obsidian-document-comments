@@ -1,7 +1,7 @@
 {
 	"id": "notion-style-comments",
 	"name": "Notion-style Comments",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"minAppVersion": "1.7.2",
 	"description": "Margin comments stored inline in your Markdown, with a formatting toolbar, custom highlight colors, and an underline style.",
 	"author": "Lucy Roh",

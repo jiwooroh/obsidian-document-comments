@@ -21,11 +21,11 @@ body {
 	--dc-highlight-bg-active: var(--dc-hl-theme-active);
 	--dc-highlight-border: var(--dc-hl-theme-border);
 	/* How much of each color's own tone mixes into its pale base (see the
-	   *-pale variables below) — 0% is the plain Notion pale wash, higher values
+	   *-pale variables below) — 0% (the default) is Notion's exact fill, higher values
 	   read as a bolder/more saturated highlight. Overridden inline on <body> by
 	   the "Highlight intensity" slider in settings (applyHighlightIntensity()
 	   in highlight-colors.ts). */
-	--dc-highlight-intensity: 5%;
+	--dc-highlight-intensity: 0%;
 }
 .cm-editor.dc-narrow,
 .markdown-reading-view.dc-narrow {
@@ -48,33 +48,35 @@ body {
 	--dc-hl-theme-border: color-mix(in srgb, var(--text-highlight-bg), var(--text-normal) 45%);
 	--dc-hl-theme-active: color-mix(in srgb, var(--text-highlight-bg), var(--text-normal) 20%);
 
-	/* Fixed, never-changing pale Notion wash for each color — the 0%-intensity
+	/* Notion's light palette: background color = highlight fill, text color =
+	   the deeper tone (underline, hover, colored comment text).
+	   Fixed, never-changing pale Notion wash for each color — the 0%-intensity
 	   anchor that --dc-hl-<id> below mixes the border tone into. Kept separate
 	   from --dc-hl-<id> itself so a user's custom hex override (set in
 	   settings) can replace just that computed result without needing to also
 	   know/preserve this base. */
 	--dc-hl-gray-pale: #F1F1EF;
 	--dc-hl-gray-border: #787774;
-	--dc-hl-brown-pale: #F3EEEE;
-	--dc-hl-brown-border: #976D57;
-	--dc-hl-orange-pale: #F8ECDF;
-	--dc-hl-orange-border: #CC782F;
-	--dc-hl-yellow-pale: #FAF3DD;
-	--dc-hl-yellow-border: #C29343;
-	--dc-hl-green-pale: #EEF3ED;
-	--dc-hl-green-border: #548164;
-	--dc-hl-blue-pale: #E9F3F7;
-	--dc-hl-blue-border: #487CA5;
-	--dc-hl-purple-pale: #F6F3F8;
-	--dc-hl-purple-border: #8A67AB;
-	--dc-hl-pink-pale: #F9F2F5;
-	--dc-hl-pink-border: #B35488;
-	--dc-hl-red-pale: #FAECEC;
-	--dc-hl-red-border: #C4554D;
+	--dc-hl-brown-pale: #F4EEEE;
+	--dc-hl-brown-border: #9E6B53;
+	--dc-hl-orange-pale: #FBEDE7;
+	--dc-hl-orange-border: #C86F21;
+	--dc-hl-yellow-pale: #F4F1E5;
+	--dc-hl-yellow-border: #B57E33;
+	--dc-hl-green-pale: #EDF3EB;
+	--dc-hl-green-border: #458262;
+	--dc-hl-blue-pale: #E7F3F8;
+	--dc-hl-blue-border: #347EA9;
+	--dc-hl-purple-pale: #F4F0F7;
+	--dc-hl-purple-border: #9165B0;
+	--dc-hl-pink-pale: #F9EEF3;
+	--dc-hl-pink-border: #C14C8A;
+	--dc-hl-red-pale: #FDEBEC;
+	--dc-hl-red-border: #D34C47;
 }
 /* The actual background each .dc-color-<id> / swatch uses: the pale base mixed
    with this color's own tone, by --dc-highlight-intensity (settings slider,
-   default 5%). MUST live on `body` (where --dc-highlight-intensity is
+   default 0% — Notion's exact fill). MUST live on `body` (where --dc-highlight-intensity is
    declared above), not :root — a var() reference resolves using the SAME
    element's cascaded value, and :root (html) can never see a variable only
    set on its descendant body, however the intensity var got there (default or
@@ -110,24 +112,25 @@ body {
 	--dc-hl-red-active: color-mix(in srgb, var(--dc-hl-red), var(--dc-hl-red-border) 35%);
 }
 body.theme-dark {
-	--dc-hl-gray-pale: #252525;
-	--dc-hl-gray-border: #9B9B9B;
-	--dc-hl-brown-pale: #2E2724;
-	--dc-hl-brown-border: #A27763;
-	--dc-hl-orange-pale: #36291F;
-	--dc-hl-orange-border: #CB7B37;
-	--dc-hl-yellow-pale: #372E20;
-	--dc-hl-yellow-border: #C19138;
-	--dc-hl-green-pale: #242B26;
-	--dc-hl-green-border: #4F9768;
-	--dc-hl-blue-pale: #1F282D;
-	--dc-hl-blue-border: #447ACB;
-	--dc-hl-purple-pale: #2A2430;
-	--dc-hl-purple-border: #865DBB;
-	--dc-hl-pink-pale: #2E2328;
-	--dc-hl-pink-border: #BA4A78;
-	--dc-hl-red-pale: #332523;
-	--dc-hl-red-border: #BE524B;
+	/* Notion's dark palette: background color = fill, text color = deeper tone. */
+	--dc-hl-gray-pale: #3C4144;
+	--dc-hl-gray-border: #9FA4A8;
+	--dc-hl-brown-pale: #4C3E35;
+	--dc-hl-brown-border: #D49675;
+	--dc-hl-orange-pale: #553B29;
+	--dc-hl-orange-border: #E98D36;
+	--dc-hl-yellow-pale: #4A3E2C;
+	--dc-hl-yellow-border: #C99D46;
+	--dc-hl-green-pale: #2F443A;
+	--dc-hl-green-border: #72B183;
+	--dc-hl-blue-pale: #2D4156;
+	--dc-hl-blue-border: #66AADA;
+	--dc-hl-purple-pale: #453A5B;
+	--dc-hl-purple-border: #B098D8;
+	--dc-hl-pink-pale: #51384D;
+	--dc-hl-pink-border: #DE84D1;
+	--dc-hl-red-pale: #5E3436;
+	--dc-hl-red-border: #EA878C;
 }
 
 /* Layout is keyed on a `dc-has` class set on the editor / reading-view container.

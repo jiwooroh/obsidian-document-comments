@@ -25,8 +25,8 @@ export const HIGHLIGHT_COLORS: HighlightColorDef[] = [
 export const DEFAULT_HIGHLIGHT_COLOR = "theme";
 
 /** Default % of each color's own tone mixed into its pale base — see
- *  --dc-highlight-intensity in styles.css. 0 = the plain Notion pale wash. */
-export const DEFAULT_HIGHLIGHT_INTENSITY = 5;
+ *  --dc-highlight-intensity in styles.css. 0 = Notion's exact fill color. */
+export const DEFAULT_HIGHLIGHT_INTENSITY = 0;
 
 /** The 9 named colors (excludes "theme", which has no pale/border pair of its
  *  own to customize — it derives entirely from the vault's theme instead). */

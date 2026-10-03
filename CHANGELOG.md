@@ -5,6 +5,10 @@ matching the pushed tag as that GitHub release's notes, so add an entry here bef
 
 ## Unreleased
 
+## 0.2.3
+
+- **Notion highlight colors:** the 9 highlight colors now use Notion's current palette in light and dark mode (background color as the fill, text color for underlines and colored comment text). Default **Highlight intensity** is now 0%, so highlights match Notion exactly; raise it for bolder colors.
+
 ## 0.2.2
 
 - **Annotation style** now has three options: **Highlight** (fill only, no underline), **Underline** (no fill), and **Highlight + underline**. Highlights no longer get an underline unless you choose it, in the editor, Reading view, tables, and PDF export.
