@@ -4,6 +4,8 @@
 
 Notion-style Comments adds inline comments to Obsidian notes. It shows each comment as a card beside the text on desktop.
 
+If you like it, [![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-yellow.svg)](https://buymeacoffee.com/jiwooroh)
+
 The plugin stores each comment inside its Markdown file as an HTML comment. Other editors, version control tools, and agents can read the comment.
 
 ## Check this out!
