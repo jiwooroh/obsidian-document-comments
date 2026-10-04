@@ -5,6 +5,10 @@ matching the pushed tag as that GitHub release's notes, so add an entry here bef
 
 ## Unreleased
 
+## 0.2.9
+
+- Removed the **Show floating button** setting and its selection button. Add comments with the **Add comment** command, or the **Comment** button in [Notion Selection Toolbar](https://github.com/jiwooroh/notion-selection-toolbar).
+
 ## 0.2.8
 
 - **Profile photo:** pick an image from your vault (or paste an image link) in settings, and it shows small and round next to your name on your own comments and replies. Turn off **Show my profile** to hide your name and photo on your comments.

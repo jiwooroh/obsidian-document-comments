@@ -34,8 +34,6 @@ export type DocCommentsSettings = {
 	showMyProfile: boolean;
 	/** Show who wrote each comment and reply. */
 	showAuthor: boolean;
-	/** Show a floating button on text selection. */
-	showFloatingButton: boolean;
 	/** Include comments as numbered footnotes when exporting a note to PDF. */
 	printComments: boolean;
 	/** Palette id (see highlight-colors.ts) for the in-text comment highlight. */
@@ -56,7 +54,6 @@ export const DEFAULT_SETTINGS: DocCommentsSettings = {
 	showComments: true,
 	showResolved: false,
 	allowEmptyComments: false,
-	showFloatingButton: false,
 	profilePhoto: "",
 	showMyProfile: true,
 	showAuthor: true,
@@ -139,13 +136,6 @@ const SETTING_META: ReadonlyArray<{
 		name: "Allow empty comments",
 		desc: "Allow new comments without text. Existing empty comments remain available when this setting is off.",
 		aliases: ["empty comments", "comment-free highlights"],
-		control: { type: "toggle" },
-	},
-	{
-		key: "showFloatingButton",
-		name: "Show floating button",
-		desc: "Show a floating comment button at the bottom-right of selected text.",
-		aliases: ["floating button", "selection button", "hover button"],
 		control: { type: "toggle" },
 	},
 	{
@@ -426,7 +416,6 @@ export class DocCommentsSettingTab extends PluginSettingTab {
 		else if (key === "showComments") this.plugin.settings.showComments = Boolean(value);
 		else if (key === "showResolved") this.plugin.settings.showResolved = Boolean(value);
 		else if (key === "allowEmptyComments") this.plugin.settings.allowEmptyComments = Boolean(value);
-		else if (key === "showFloatingButton") this.plugin.settings.showFloatingButton = Boolean(value);
 		else if (key === "printComments") this.plugin.settings.printComments = Boolean(value);
 		else if (key === "showAuthor") this.plugin.settings.showAuthor = Boolean(value);
 		else if (key === "showMyProfile") this.plugin.settings.showMyProfile = Boolean(value);

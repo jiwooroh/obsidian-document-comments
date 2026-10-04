@@ -1287,53 +1287,6 @@ body.dc-hide-author .dc-entry__author {
 	min-height: 5em;
 	resize: vertical;
 }
-.dc-floating-button {
-	position: fixed;
-	z-index: calc(var(--layer-popover, 30) + 5);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 28px;
-	height: 28px;
-	border: 1px solid var(--interactive-accent);
-	border-radius: 50%;
-	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-	cursor: pointer;
-	padding: 0;
-	opacity: 0;
-	transform: scale(0.8);
-	transition: transform 180ms cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 120ms ease, box-shadow 120ms ease, background-color 120ms ease, color 120ms ease, border-color 120ms ease;
-	pointer-events: none;
-}
-.theme-light .dc-floating-button {
-	background-color: #ffffff;
-	color: var(--interactive-accent);
-}
-.theme-dark .dc-floating-button {
-	background-color: #1e1e1e;
-	color: var(--interactive-accent);
-}
-.dc-floating-button.is-visible {
-	opacity: 1;
-	transform: scale(1);
-	pointer-events: auto;
-}
-.dc-floating-button:hover {
-	transform: scale(1.1) translateY(-2px);
-	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
-	border-color: var(--interactive-accent);
-}
-.dc-floating-button:active {
-	transform: scale(0.95);
-	background-color: var(--interactive-accent-hover, var(--interactive-accent));
-}
-.dc-floating-button .svg-icon {
-	width: 14px;
-	height: 14px;
-	display: block;
-}
 
 
 

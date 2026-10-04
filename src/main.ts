@@ -28,7 +28,6 @@ import { COMMENTS_VIEW_TYPE, CommentsSidebarView, SidebarDeps } from "./ui/sideb
 import { CommentModal } from "./ui/comment-modal";
 import { DEFAULT_SETTINGS, DocCommentsSettings, DocCommentsSettingTab } from "./settings";
 import { tableHighlightPlugin } from "./editor/table-highlights";
-import { FloatingButtonManager } from "./ui/floating-button";
 import {
 	applyAnnotationStyle,
 	applyCustomHighlightColors,
@@ -45,7 +44,6 @@ export default class DocCommentsPlugin extends Plugin {
 	private scheduleReadingRefresh: () => void = () => {};
 	/** True while the "All discussions" sidebar panel is mounted. */
 	private sidebarOpen = false;
-	private floatingButtonManager: FloatingButtonManager | null = null;
 	private textToolbar: TextFormatToolbar | null = null;
 
 	async onload(): Promise<void> {
@@ -201,7 +199,6 @@ export default class DocCommentsPlugin extends Plugin {
 		this.addRibbonIcon("messages-square", "Open comments sidebar", () => void this.activateSidebar());
 
 		this.addSettingTab(new DocCommentsSettingTab(this.app, this));
-		this.floatingButtonManager = new FloatingButtonManager(this);
 		this.textToolbar = new TextFormatToolbar();
 	}
 
@@ -466,7 +463,6 @@ export default class DocCommentsPlugin extends Plugin {
 
 	onunload(): void {
 		this.readingManager?.destroy();
-		this.floatingButtonManager?.destroy();
 		this.textToolbar?.destroy();
 		activeDocument.body.removeClass("dc-hide-author");
 		clearProfile();
