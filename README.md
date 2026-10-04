@@ -2,14 +2,18 @@
 
 > This is a fork of [kylemcd/obsidian-document-comments](https://github.com/kylemcd/obsidian-document-comments) (**Document Comments**) by **Kyle McDonald**. All credit for the original plugin goes to the original author. This fork adds the features listed below. The original work is used under the MIT License; see [LICENSE](LICENSE).
 
-Notion-style Comments adds inline comments to Obsidian notes. It shows each comment as a card beside the text on desktop.
+Notion-style Comments adds inline comments to Obsidian notes. It shows each comment as a card beside the text on desktop and iPad.
+
+[Install it from the Obsidian community plugin directory](https://obsidian.md/plugins?id=notion-style-comments).
 
 If you like it, [![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-yellow.svg)](https://buymeacoffee.com/jiwooroh)
 
 The plugin stores each comment inside its Markdown file as an HTML comment. Other editors, version control tools, and agents can read the comment.
 
 ## Check this out!
-To use more features like Notion, check out [Notion-selection-toolbar](obsidian://show-plugin?id=notion-selection-toolbar) plugin
+
+For more Notion-style editing, check out [Notion Selection Toolbar](https://obsidian.md/plugins?id=notion-selection-toolbar), another plugin of mine.
+
 ![Notion Selection Toolbar](docs/screenshots/ezgif-1ab60f177f5882d8.gif)
 
 ## What this fork adds
@@ -28,9 +32,9 @@ Select text while you write or edit a comment, and a small toolbar appears above
 
 Choose how commented text is marked in your notes.
 
-- **Highlight color**: theme default or one of 9 Notion-style colors (yellow, green, blue, purple, pink, red, orange, brown, gray).
-- **Highlight intensity**: a slider that makes every color paler or bolder.
-- **Custom colors**: pick your own hex value for each color, separately for light and dark themes.
+- **Highlight color**: your theme's highlight color, or one of Notion's 9 colors (yellow, green, blue, purple, pink, red, orange, brown, gray), with separate light and dark palettes.
+- **Highlight intensity**: 0% (the default) is Notion's exact color. Raise it to make every highlight bolder.
+- **Custom colors**: pick your own hex value for each color, separately for light and dark themes. Each picker shows the default until you change it; ↺ resets it.
 
 ![Highlight color settings](docs/screenshots/highlight-settings.png)
 
@@ -53,7 +57,7 @@ When you export a note to PDF, each commented passage is highlighted with a foot
 
 ### Narrow window layout
 
-When the window is too narrow for the margin, comment cards hide and appear when you hover over the highlighted text, so the note keeps its full width.
+When the window is too narrow for the margin (or an iPad in portrait), comment cards hide and appear when you hover over or tap the highlighted text, so the note keeps its full width.
 
 ![Narrow window layout](docs/screenshots/narrow-layout.png)
 
@@ -65,10 +69,17 @@ In settings, set **Profile photo** to an image from your vault (**Choose…**) o
 
 Turn off **Show author names** in settings to hide who wrote each comment and reply, on comment cards and in highlight hover previews.
 
+### Long comments
+
+Long comments show in full when there's room. A comment folds to a "more" preview only when it would run into the next card, or when it's taller than the window (then it offers **Open in sidebar →**). Use **less** / **more** to fold or unfold one yourself; your choice stays until you click the other.
+
+### iPad support
+
+iPad shows comment cards in the margin, like desktop. Phones show highlights only, and you read and add comments in the sidebar and a pop-up.
+
 ### Smaller touches
 
 - Comment boxes grow as you type.
-- Long comments show in full when there's room, and fold to a "more" preview only when they'd crowd the next comment. Use **less** / **more** to fold or unfold one yourself.
 - Click your own comment text to edit it.
 
 ## Original features
@@ -106,6 +117,8 @@ The `<!--c:ID-->` and `<!--/c:ID-->` markers identify the selected text. The mat
 Markdown renderers hide these HTML comments. Tools that read the source file can find each comment and its selected text.
 
 Comments on fenced code blocks use the same format. The comment block also stores the selected line range and exact code text.
+
+A comment's color or style override (set from its **⋯** menu) is stored in the same header, for example `color:blue style:underline`.
 
 An empty comment uses the same markers. Its comment block has no thread lines:
 
@@ -224,17 +237,34 @@ The Reading view command cannot add comments to embedded content.
 
 ### Manage a comment
 
-Select a card to open its reply field. Hover over an entry to show its reaction, resolve, edit, and delete controls.
+Select a card to open its reply field. Each entry has **react**, **resolve**, and **reply** buttons, plus a **⋯** menu to change the comment's color or style, or delete it. Click your own comment text to edit it.
 
 Use the **Open comments sidebar** command or ribbon icon to show all comments in the active note.
 
-Use **Toggle comments** to show or hide all cards and highlights. Use **Toggle resolved comments** to show or hide resolved comments.
+Use **Toggle comments** to show or hide all cards and highlights. Use **Toggle resolved comments** to show or hide resolved comments. Use **Toggle comments in PDF export** to include or leave out comments when exporting to PDF.
 
 ### Set the author
 
 Open **Settings → Notion-style Comments**. Set **Author** to the name that the plugin adds to new comments.
 
-The plugin uses `me` when the Author setting is empty.
+The plugin uses `me` when the Author setting is empty. Your profile photo and **Show my profile** apply to comments written under this name.
+
+## Settings
+
+| Setting | What it does | Default |
+|---|---|---|
+| Author | Name added to your new comments | `me` |
+| Profile photo | Small round photo next to your name on your own comments (vault image or link) | None |
+| Show comments | Show the comment cards and highlights | On |
+| Show my profile | Show your name and photo on your own comments | On |
+| Show author names | Show who wrote each comment and reply, on cards and hover previews | On |
+| Show resolved comments | Keep resolved comments visible | Off |
+| Allow empty comments | Let a comment be saved without text (highlight only) | Off |
+| Show comments in PDF export | Print comments in a margin column when exporting to PDF | On |
+| Annotation style | Highlight, Underline, or Highlight + underline | Highlight |
+| Highlight color | Theme default or one of Notion's 9 colors | Theme default |
+| Highlight intensity | How bold the highlight color is (0% = Notion's exact color) | 0% |
+| Custom highlight colors | Your own hex for each color, per light/dark theme | Notion's palette |
 
 ## Desktop, tablet, and phone behavior
 
@@ -287,16 +317,14 @@ npm test
 
 ### Release
 
-Update `manifest.json`, `package.json`, `versions.json`, and `CHANGELOG.md` before a release.
+Update `manifest.json`, `package.json`, `versions.json`, and `CHANGELOG.md` before a release. The tag must match the version in `manifest.json` exactly, with no leading `v`.
 
-Push a tag that exactly matches the version in `manifest.json`:
+Build, then create the GitHub release with the plugin files attached, using that version's CHANGELOG section as the notes:
 
 ```bash
-git tag 0.2.1
-git push origin 0.2.1
+npm run build
+gh release create 0.2.9 --title 0.2.9 --notes "…" main.js manifest.json styles.css
 ```
-
-Then create a GitHub release for that tag with `main.js`, `manifest.json`, and `styles.css` attached.
 
 ## License
 
