@@ -1,12 +1,14 @@
 import {
 	App,
 	type ColorComponent,
+	type TextComponent,
 	PluginSettingTab,
 	Setting,
 	type SettingDefinitionItem,
 	type SettingGroupItem,
 } from "obsidian";
 import type DocCommentsPlugin from "./main";
+import { cssUrl, ImageFileModal, resolvePhotoUrl } from "./ui/profile";
 import {
 	ANNOTATION_STYLES,
 	CUSTOMIZABLE_HIGHLIGHT_COLORS,
@@ -26,6 +28,10 @@ export type DocCommentsSettings = {
 	showResolved: boolean;
 	/** Allow a blank comment to persist with an empty comment card. */
 	allowEmptyComments: boolean;
+	/** Your profile photo: a vault image path or a web URL. Empty = none. */
+	profilePhoto: string;
+	/** Show your name and photo on your own comments. */
+	showMyProfile: boolean;
 	/** Show who wrote each comment and reply. */
 	showAuthor: boolean;
 	/** Show a floating button on text selection. */
@@ -51,6 +57,8 @@ export const DEFAULT_SETTINGS: DocCommentsSettings = {
 	showResolved: false,
 	allowEmptyComments: false,
 	showFloatingButton: false,
+	profilePhoto: "",
+	showMyProfile: true,
 	showAuthor: true,
 	printComments: true,
 	highlightColor: DEFAULT_HIGHLIGHT_COLOR,
@@ -66,7 +74,7 @@ type DocCommentsSettingKey = keyof DocCommentsSettings;
  *  dropdown/slider/toggle rendering only ever stringifies string/number/
  *  boolean values, and this keeps the type checker able to confirm that
  *  instead of silently risking "[object Object]". */
-type StringSettingKey = Exclude<DocCommentsSettingKey, "highlightColorsLight" | "highlightColorsDark">;
+type StringSettingKey = Exclude<DocCommentsSettingKey, "highlightColorsLight" | "highlightColorsDark" | "profilePhoto">;
 
 type TextControl = { type: "text"; placeholder: string };
 type ToggleControl = { type: "toggle" };
@@ -103,6 +111,13 @@ const SETTING_META: ReadonlyArray<{
 		name: "Show comments",
 		desc: "Show the comment column. You can also toggle this from the ribbon or the command palette.",
 		aliases: ["comment column", "margin comments"],
+		control: { type: "toggle" },
+	},
+	{
+		key: "showMyProfile",
+		name: "Show my profile",
+		desc: "Show your name and profile photo on your own comments and replies.",
+		aliases: ["profile", "avatar", "my name", "photo"],
 		control: { type: "toggle" },
 	},
 	{
@@ -221,6 +236,12 @@ export class DocCommentsSettingTab extends PluginSettingTab {
 				control: { type: "toggle", key: meta.key, defaultValue: DEFAULT_SETTINGS[meta.key] as boolean },
 			};
 		});
+		// The photo picker sits right after Author — the same "your profile" topic.
+		const authorIndex = SETTING_META.findIndex((m) => m.key === "author");
+		items.splice(authorIndex + 1, 0, {
+			name: "Profile photo",
+			render: (setting) => this.buildPhotoRow(setting),
+		});
 		// One SettingDefinitionRender item per color: its `render(setting)` callback
 		// decorates the ONE row Obsidian already created for that item — the
 		// documented usage. (An earlier version tried to dynamically add MORE
@@ -258,6 +279,7 @@ export class DocCommentsSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 		for (const meta of SETTING_META) {
+			if (meta.key === "showComments") this.buildPhotoRow(new Setting(containerEl));
 			const setting = new Setting(containerEl).setName(meta.name).setDesc(meta.desc);
 			if (meta.control.type === "text") {
 				const placeholder = meta.control.placeholder;
@@ -303,6 +325,59 @@ export class DocCommentsSettingTab extends PluginSettingTab {
 		for (const c of CUSTOMIZABLE_HIGHLIGHT_COLORS) this.buildColorRow(new Setting(containerEl), "light", c);
 		new Setting(containerEl).setName("Dark theme").setHeading();
 		for (const c of CUSTOMIZABLE_HIGHLIGHT_COLORS) this.buildColorRow(new Setting(containerEl), "dark", c);
+	}
+
+	/** Profile photo: a small preview, the vault path or URL as text, a vault
+	 *  image picker, and a clear button. Shared by both settings paths. */
+	private buildPhotoRow(setting: Setting): void {
+		setting
+			.setName("Profile photo")
+			.setDesc(
+				"Shown small next to your name on your own comments. Pick an image from your vault, or paste an image link.",
+			);
+		const preview = setting.controlEl.createDiv({ cls: "dc-avatar dc-avatar--preview" });
+		const showPreview = () => {
+			const url = resolvePhotoUrl(this.app, this.plugin.settings.profilePhoto);
+			preview.toggleClass("is-empty", !url);
+			preview.setCssStyles({ backgroundImage: url ? cssUrl(url) : "" });
+		};
+		let input: TextComponent | null = null;
+		setting.addText((text) => {
+			input = text;
+			text.setPlaceholder("attachments/me.png or https://…")
+				.setValue(this.plugin.settings.profilePhoto)
+				.onChange(async (value) => {
+					await this.setProfilePhoto(value.trim());
+					showPreview();
+				});
+		});
+		setting.addButton((btn) =>
+			btn.setButtonText("Choose…").onClick(() => {
+				new ImageFileModal(this.app, (file) => {
+					void this.setProfilePhoto(file.path).then(() => {
+						input?.setValue(file.path);
+						showPreview();
+					});
+				}).open();
+			}),
+		);
+		setting.addExtraButton((btn) =>
+			btn
+				.setIcon("x")
+				.setTooltip("Remove photo")
+				.onClick(async () => {
+					await this.setProfilePhoto("");
+					input?.setValue("");
+					showPreview();
+				}),
+		);
+		showPreview();
+	}
+
+	private async setProfilePhoto(value: string): Promise<void> {
+		this.plugin.settings.profilePhoto = value;
+		await this.plugin.saveSettings();
+		this.plugin.applyProfile();
 	}
 
 	/** One color-picker + reset row, shared by both the declarative render item
@@ -354,6 +429,7 @@ export class DocCommentsSettingTab extends PluginSettingTab {
 		else if (key === "showFloatingButton") this.plugin.settings.showFloatingButton = Boolean(value);
 		else if (key === "printComments") this.plugin.settings.printComments = Boolean(value);
 		else if (key === "showAuthor") this.plugin.settings.showAuthor = Boolean(value);
+		else if (key === "showMyProfile") this.plugin.settings.showMyProfile = Boolean(value);
 		else if (key === "highlightColor") this.plugin.settings.highlightColor = String(value);
 		else if (key === "highlightIntensity") this.plugin.settings.highlightIntensity = Number(value);
 		else if (key === "annotationStyle") this.plugin.settings.annotationStyle = String(value);
@@ -363,5 +439,6 @@ export class DocCommentsSettingTab extends PluginSettingTab {
 		if (key !== "author" && !colorKeys.includes(key)) this.plugin.refreshEditors();
 		if (key === "showComments") this.plugin.updateRibbon();
 		if (key === "showAuthor") this.plugin.applyAuthorVisibility();
+		if (key === "showMyProfile") this.plugin.applyProfile();
 	}
 }

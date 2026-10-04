@@ -23,7 +23,7 @@ import {
 } from "./commands";
 import { closestSpanId, spanSelector } from "../util/css";
 import { isNarrowForMargin } from "../util/narrow";
-import { stackTops } from "../ui/stack";
+import { crowdedCards, stackTops } from "../ui/stack";
 import { CARD_GAP, DRAFT_LIFT_PX, FLASH_MS } from "../ui/constants";
 import { buildDraftComposer } from "../ui/draft-composer";
 import { EmptySubmitAction } from "../ui/draft-behavior";
@@ -225,14 +225,10 @@ class MarginView implements PluginValue {
 		// absolutely positioned, so a top write can't change any height.
 		const placements: Array<{ el: HTMLElement; top: number; height: number }> = [];
 
-		/** Places `el` relative to the anchor at `pos`. `center: true` (used for
-		 *  already-saved cards, which have a stable height at render time) aligns
-		 *  the card's own vertical middle with the anchor line's middle, rather
-		 *  than starting flush with its top — closer to how a tooltip centers on
-		 *  its trigger. `lift` (used for the draft composer, which grows while you
-		 *  type) is the simpler fixed nudge instead — centering something that's
-		 *  actively resizing under your cursor would make it jump as you type. */
-		const place = (el: HTMLElement, pos: number, opts: { lift?: number; center?: boolean } = {}) => {
+		/** Places the draft composer relative to the anchor at `pos`, nudged up by
+		 *  `lift` — not centered like saved cards, since it grows while you type
+		 *  and centering would make it jump under your cursor. */
+		const place = (el: HTMLElement, pos: number, opts: { lift?: number } = {}) => {
 			const coords = this.view.coordsAtPos(pos);
 			if (!coords) {
 				el.addClass("dc-offscreen");
@@ -240,9 +236,7 @@ class MarginView implements PluginValue {
 			}
 			el.removeClass("dc-offscreen");
 			if (el.offsetHeight === 0) return; // hidden (e.g. resolved)
-			const top = opts.center
-				? (coords.top + coords.bottom) / 2 - editorTop - el.offsetHeight / 2
-				: coords.top - editorTop - (opts.lift ?? 0);
+			const top = coords.top - editorTop - (opts.lift ?? 0);
 			placements.push({ el, top, height: el.offsetHeight });
 		};
 
@@ -257,6 +251,7 @@ class MarginView implements PluginValue {
 		const foldGroups = new Map<number, { fold: { from: number; to: number }; ids: string[] }>();
 
 		const doc = this.view.state.doc.toString();
+		const anchored: Array<{ card: Card; mid: number }> = [];
 		for (const c of this.comments()) {
 			const card = this.cards.get(c.id);
 			if (!card) continue;
@@ -274,7 +269,28 @@ class MarginView implements PluginValue {
 				else foldGroups.set(fold.from, { fold, ids: [c.id] });
 				continue;
 			}
-			place(card.el, range.from, { center: true });
+			const coords = this.view.coordsAtPos(range.from);
+			if (!coords) {
+				card.el.addClass("dc-offscreen");
+				continue;
+			}
+			card.el.removeClass("dc-offscreen");
+			if (card.el.offsetHeight === 0) continue; // hidden (e.g. resolved)
+			anchored.push({ card, mid: (coords.top + coords.bottom) / 2 - editorTop });
+		}
+
+		// Show each long thread in full unless that would crowd a neighbor; only
+		// the tight spots fold. Decided before measuring heights for stacking,
+		// since folding changes them.
+		const crowded = crowdedCards(
+			anchored.map((a) => ({ mid: a.mid, ...a.card.heights() })),
+			CARD_GAP,
+		);
+		anchored.forEach((a, i) => a.card.setCrowded(crowded[i] ?? false));
+		// Already-saved cards have a stable height, so center each on its anchor
+		// line (like a tooltip on its trigger) rather than starting flush with it.
+		for (const { card, mid } of anchored) {
+			placements.push({ el: card.el, top: mid - card.el.offsetHeight / 2, height: card.el.offsetHeight });
 		}
 
 		// Nudged up a bit vs. a resting card — writing a fresh comment needs room

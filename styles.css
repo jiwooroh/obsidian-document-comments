@@ -563,6 +563,11 @@ body.dc-annotation-both ::highlight(notion-style-comments-table) {
 .dc-card-foot.is-empty {
 	display: none;
 }
+/* "less" on an unfolded long thread: bottom-right, where "more" sits when folded. */
+.dc-card-foot.dc-foot-end {
+	justify-content: flex-end;
+	margin-top: 2px;
+}
 /* Collapsed "more": bottom-right corner, over the faded-out end of the text
    (Notion-style — reads as a continuation of the truncated line, not a
    separate button row), rather than centered across the whole card. A small
@@ -628,6 +633,34 @@ body.dc-annotation-both ::highlight(notion-style-comments-table) {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+/* Your profile photo on your own entries (ui/profile.ts sets the variable and
+   classes on <body>). Small and round, sitting just before your name. */
+.dc-avatar {
+	display: none;
+	flex: none;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: var(--dc-my-avatar) center / cover no-repeat;
+	align-self: center;
+}
+body.dc-has-avatar .dc-entry.is-mine .dc-avatar {
+	display: inline-block;
+}
+body.dc-hide-my-profile .dc-entry.is-mine .dc-avatar,
+body.dc-hide-my-profile .dc-entry.is-mine .dc-entry__author {
+	display: none;
+}
+/* Settings preview of the chosen photo. */
+.dc-avatar.dc-avatar--preview {
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+	background-color: var(--background-modifier-border);
+}
+.dc-avatar.dc-avatar--preview.is-empty {
+	display: none;
 }
 /* "Show author names" off (body class set by applyAuthorVisibility in main.ts). */
 body.dc-hide-author .dc-entry__author {

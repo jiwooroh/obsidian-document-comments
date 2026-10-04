@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { stackTops } from "../src/ui/stack";
+import { crowdedCards, stackTops } from "../src/ui/stack";
 
 describe("stackTops", () => {
 	test("returns tops in the original input order", () => {
@@ -50,5 +50,44 @@ describe("stackTops", () => {
 		);
 		// sorted anchors 0, 50, 100 → 0, 50, 100 (none overlaps the previous + gap)
 		expect(tops).toEqual([100, 0, 50]);
+	});
+});
+
+describe("crowdedCards", () => {
+	test("leaves a long card in full when its neighbors are far away", () => {
+		const flags = crowdedCards(
+			[
+				{ mid: 0, full: 300, folded: 125 },
+				{ mid: 600, full: 80, folded: 80 },
+			],
+			8,
+		);
+		expect(flags).toEqual([false, false]);
+	});
+
+	test("folds a long card that would run into the next card", () => {
+		// Full height 300 centered at 0 reaches 150; the next card (folded 80,
+		// centered at 200) starts at 160 — fine. Move it to 180 and they clash.
+		expect(
+			crowdedCards(
+				[
+					{ mid: 0, full: 300, folded: 125 },
+					{ mid: 180, full: 80, folded: 80 },
+				],
+				8,
+			),
+		).toEqual([true, false]);
+	});
+
+	test("checks neighbors by anchor order, not input order", () => {
+		const flags = crowdedCards(
+			[
+				{ mid: 500, full: 60, folded: 60 },
+				{ mid: 0, full: 400, folded: 125 },
+				{ mid: 1000, full: 60, folded: 60 },
+			],
+			8,
+		);
+		expect(flags).toEqual([false, false, false]);
 	});
 });

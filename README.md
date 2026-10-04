@@ -59,6 +59,10 @@ When the window is too narrow for the margin, comment cards hide and appear when
 
 ![Narrow window layout](docs/screenshots/narrow-layout.png)
 
+### Profile photo
+
+In settings, set **Profile photo** to an image from your vault (**Choose…**) or an image link. It shows as a small round photo next to your name on your own comments and replies. Turn off **Show my profile** to hide your name and photo on your comments.
+
 ### Hide author names
 
 Turn off **Show author names** in settings to hide who wrote each comment and reply, on comment cards and in highlight hover previews.
@@ -66,7 +70,7 @@ Turn off **Show author names** in settings to hide who wrote each comment and re
 ### Smaller touches
 
 - Comment boxes grow as you type.
-- Long comments are clamped with a "more" link.
+- Long comments show in full when there's room, and fold to a "more" preview only when they'd crowd the next comment. Use **less** / **more** to fold or unfold one yourself.
 - Click your own comment text to edit it.
 
 ## Original features

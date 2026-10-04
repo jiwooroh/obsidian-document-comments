@@ -18,7 +18,7 @@ import {
 import { applyCommentEdit, insertComment as routeInsertComment } from "../editor/routing";
 import { closestSpanId, spanSelector } from "../util/css";
 import { isNarrowForMargin } from "../util/narrow";
-import { stackTops } from "../ui/stack";
+import { crowdedCards, stackTops } from "../ui/stack";
 import { CARD_GAP, DRAFT_LIFT_PX, FLASH_MS } from "../ui/constants";
 import { buildDraftComposer } from "../ui/draft-composer";
 import { EmptySubmitAction } from "../ui/draft-behavior";
@@ -189,6 +189,7 @@ class ReadingMargin {
 		// Gather geometry (reads) first, then write every top in one pass — cards are
 		// absolutely positioned, so a top write can't change any height.
 		const placements: Array<{ el: HTMLElement; top: number; height: number }> = [];
+		const anchored: Array<{ card: Card; mid: number }> = [];
 		for (const c of this.comments) {
 			const card = this.cards.get(c.id);
 			if (!card) continue;
@@ -199,17 +200,23 @@ class ReadingMargin {
 			}
 			card.el.removeClass("dc-offscreen");
 			if (card.el.offsetHeight === 0) continue;
-			// Center the card's own height on the anchor span, rather than starting
-			// flush with its top — a stable target since the card's height doesn't
-			// change while it's just sitting there (unlike the draft below, which
-			// grows as you type, so it uses a fixed lift instead of centering).
 			const spanRect = span.getBoundingClientRect();
-			const anchorMid = (spanRect.top + spanRect.bottom) / 2 - topRef;
-			placements.push({
-				el: card.el,
-				top: anchorMid - card.el.offsetHeight / 2,
-				height: card.el.offsetHeight,
-			});
+			anchored.push({ card, mid: (spanRect.top + spanRect.bottom) / 2 - topRef });
+		}
+		// Show each long thread in full unless that would crowd a neighbor; only
+		// the tight spots fold. Decided before measuring heights for stacking,
+		// since folding changes them.
+		const crowded = crowdedCards(
+			anchored.map((a) => ({ mid: a.mid, ...a.card.heights() })),
+			CARD_GAP,
+		);
+		anchored.forEach((a, i) => a.card.setCrowded(crowded[i] ?? false));
+		// Center each card on its anchor span rather than starting flush with its
+		// top — a stable target since a saved card's height doesn't change while it
+		// sits there (unlike the draft below, which grows as you type, so it uses a
+		// fixed lift instead of centering).
+		for (const { card, mid } of anchored) {
+			placements.push({ el: card.el, top: mid - card.el.offsetHeight / 2, height: card.el.offsetHeight });
 		}
 		if (this.draftEl && this.draftAnchor) {
 			// Nudged up a bit vs. a resting card — see DRAFT_LIFT_PX.

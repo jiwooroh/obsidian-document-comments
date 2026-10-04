@@ -23,6 +23,7 @@ import { findSectionRange, highlightPostProcessor, mapReadingSelection } from ".
 import { ReadingDeps, ReadingMarginManager } from "./reading/margin";
 import { printNotesPostProcessor } from "./reading/print-notes";
 import { setPreviewShowsAuthor } from "./format/preview";
+import { applyProfile, clearProfile } from "./ui/profile";
 import { COMMENTS_VIEW_TYPE, CommentsSidebarView, SidebarDeps } from "./ui/sidebar";
 import { CommentModal } from "./ui/comment-modal";
 import { DEFAULT_SETTINGS, DocCommentsSettings, DocCommentsSettingTab } from "./settings";
@@ -55,6 +56,8 @@ export default class DocCommentsPlugin extends Plugin {
 		applyCustomHighlightColors(this.settings.highlightColorsLight, this.settings.highlightColorsDark);
 		applyAnnotationStyle(this.settings.annotationStyle);
 		this.applyAuthorVisibility();
+		// Vault images resolve only once the vault is indexed.
+		this.app.workspace.onLayoutReady(() => this.applyProfile());
 
 		this.registerEditorExtension([
 			commentField,
@@ -366,6 +369,12 @@ export default class DocCommentsPlugin extends Plugin {
 		});
 	}
 
+	/** Your photo and the "Show my profile" switch, painted onto your own
+	 *  comment entries via body-level CSS (see ui/profile.ts). */
+	applyProfile(): void {
+		applyProfile(this.app, this.settings.profilePhoto, this.settings.showMyProfile);
+	}
+
 	/** Re-applies the chosen palette color, the intensity slider, any custom
 	 *  per-color overrides, and the highlight/underline annotation style.
 	 *  Called by the settings tab after any of those change, and on theme
@@ -460,6 +469,7 @@ export default class DocCommentsPlugin extends Plugin {
 		this.floatingButtonManager?.destroy();
 		this.textToolbar?.destroy();
 		activeDocument.body.removeClass("dc-hide-author");
+		clearProfile();
 	}
 
 	private authorName(): string {

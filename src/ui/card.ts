@@ -7,9 +7,9 @@ import { ANNOTATION_STYLES, HIGHLIGHT_COLORS } from "./highlight-colors";
 
 const QUICK_EMOJI = ["👍", "❤️", "😄", "🎉", "😮", "👀", "🙏"];
 
-// A margin card whose thread is taller than this collapses to a "Show more" preview
-// (Notion-style), so a long comment never dominates the column or runs off the
-// bottom edge. Sized to roughly the entry header (~26px) plus 6 lines of comment
+// A margin card whose thread is taller than this can fold to a "more" preview
+// (Notion-style) — when the user folds it, or when it would crowd the next card
+// (see setCrowded); with room to spare it shows in full. Sized to roughly the entry header (~26px) plus 6 lines of comment
 // text (--font-ui-small at line-height 1.25 ≈ 16.25px/line ≈ 98px), plus a small
 // buffer. Keep in sync with the .dc-card-clip max-height in styles.css.
 const CLAMP_HEIGHT = 125;
@@ -63,11 +63,16 @@ export class Card {
 	readonly el: HTMLElement;
 	private comment: ParsedComment;
 	private open = false;
-	/** Manually unclamped via "Show more", independent of `open` — expanding to
-	 *  read the full thread must NOT also reveal/focus the reply composer. */
-	private expanded = false;
-	/** Whether onDocMouseDown is currently registered — active whenever `open`
-	 *  or `expanded` is true, torn down the moment both are false again. */
+	/** The user's explicit fold choice for a long thread: "auto" folds only when
+	 *  the card is crowded (or too tall for the column); "folded" / "unfolded"
+	 *  are set by the "less" / "more" links and stick until clicked again.
+	 *  Independent of `open` — unfolding to read must NOT open the composer. */
+	private fold: "auto" | "folded" | "unfolded" = "auto";
+	/** Set by the margin layout: showing this thread in full would run into a
+	 *  neighboring card, so "auto" folds it. */
+	private crowded = false;
+	/** Whether onDocMouseDown is currently registered — active while the reply
+	 *  composer is open, torn down when it closes. */
 	private outsideClickBound = false;
 	private editingIndex = -1;
 	private addingFirstEntry = false;
@@ -109,11 +114,11 @@ export class Card {
 			// same affordance as clicking "more" itself, just a far bigger target
 			// than that small span. Excludes the too-tall case: that click still goes
 			// to "open in sidebar" below, matching its own footer button.
-			if (!this.open && !this.expanded && !this.tooTall && this.overflows && this.clipEl) {
+			if (this.isClamped() && !this.tooTall && this.clipEl) {
 				const clipRect = this.clipEl.getBoundingClientRect();
 				if (e.clientY >= clipRect.bottom - EXPAND_HIT_ZONE) {
 					this.cb.onClickAnchor(this.id);
-					this.setExpanded(true);
+					this.setFold("unfolded");
 					return;
 				}
 			}
@@ -164,9 +169,8 @@ export class Card {
 		this.el.toggleClass("is-active", active);
 	}
 
-	/** Opens/closes the reply composer. Clicking outside the card auto-collapses
-	 *  it (see onDocMouseDown) — same as an expanded "Show more" thread, and for
-	 *  the same reason: there's no dedicated collapse button for either. */
+	/** Opens/closes the reply composer. Clicking outside the card closes it
+	 *  (see onDocMouseDown); there's no dedicated close button. */
 	private setOpen(open: boolean): void {
 		if (this.open === open) return;
 		const fromHeight = this.clipEl?.offsetHeight ?? 0;
@@ -188,38 +192,55 @@ export class Card {
 		else this.focusComposer();
 	}
 
-	/** "Show more": unclamp to read the full thread WITHOUT opening the reply
-	 *  composer — a purely visual expand, independent of `open`. No dedicated
-	 *  collapse button; clicking outside the card is the only way back (see
-	 *  onDocMouseDown). */
-	private setExpanded(value: boolean): void {
-		if (this.expanded === value) return;
+	/** The "more" / "less" links: the user's explicit fold choice, kept until
+	 *  they click the other one. */
+	private setFold(fold: "folded" | "unfolded"): void {
+		if (this.fold === fold) return;
 		const fromHeight = this.clipEl?.offsetHeight ?? 0;
-		this.expanded = value;
-		this.render();
+		this.fold = fold;
+		this.applyClampState();
 		this.animateClip(fromHeight);
 		(this.cb.animateLayout ?? this.cb.onResize)();
-		this.syncOutsideClickListener();
 	}
 
-	/** Outside click / Escape: return fully to the resting, clamped state
-	 *  regardless of whether it was unclamped via Reply or via "Show more". */
+	/** Margin layout: whether showing this thread in full would crowd a
+	 *  neighboring card. Returns true when that changed the card's height, so
+	 *  the caller re-measures before stacking. */
+	setCrowded(crowded: boolean): boolean {
+		if (this.crowded === crowded) return false;
+		const before = this.isClamped();
+		this.crowded = crowded;
+		if (this.isClamped() === before) return false;
+		this.applyClampState();
+		return true;
+	}
+
+	/** Card height with the thread shown in full / folded to the clamp. */
+	heights(): { full: number; folded: number } {
+		const thread = this.threadEl?.offsetHeight ?? 0;
+		const chrome = this.el.offsetHeight - (this.clipEl?.offsetHeight ?? 0);
+		return { full: chrome + thread, folded: chrome + Math.min(thread, CLAMP_HEIGHT) };
+	}
+
+	/** Whether the thread is currently cut to the clamp height. */
+	private isClamped(): boolean {
+		if (!this.view.collapsible || !this.overflows || this.open) return false;
+		if (this.fold === "folded") return true;
+		if (this.fold === "unfolded") return false;
+		return this.crowded || this.tooTall;
+	}
+
+	/** Outside click / Escape: close the reply composer. A fold choice stays. */
 	private collapse(): void {
-		if (!this.open && !this.expanded) return;
-		const fromHeight = this.clipEl?.offsetHeight ?? 0;
-		this.open = false;
-		this.expanded = false;
-		this.render();
-		this.animateClip(fromHeight);
-		(this.cb.animateLayout ?? this.cb.onResize)();
-		this.syncOutsideClickListener();
+		if (!this.open) return;
+		this.setOpen(false);
 	}
 
-	/** Registers/unregisters onDocMouseDown to track whether either non-resting
-	 *  state (open or expanded) is currently active — avoids double-adding or
-	 *  leaking the listener across the several call sites that can change them. */
+	/** Registers/unregisters onDocMouseDown to track whether the reply composer
+	 *  is open — avoids double-adding or leaking the listener across the call
+	 *  sites that can change it. */
 	private syncOutsideClickListener(): void {
-		const shouldListen = this.open || this.expanded;
+		const shouldListen = this.open;
 		if (shouldListen && !this.outsideClickBound) {
 			this.el.ownerDocument.addEventListener("mousedown", this.onDocMouseDown, true);
 			this.outsideClickBound = true;
@@ -239,7 +260,7 @@ export class Card {
 	private animateClip(fromHeight: number): void {
 		const clip = this.clipEl;
 		if (!clip || !this.view.collapsible) return;
-		const toHeight = this.open || this.expanded ? clip.scrollHeight : CLAMP_HEIGHT;
+		const toHeight = this.isClamped() ? CLAMP_HEIGHT : clip.scrollHeight;
 		if (Math.abs(fromHeight - toHeight) < 2) return;
 		clip.setCssStyles({ overflow: "hidden", transition: "none", maxHeight: `${fromHeight}px` });
 		void clip.offsetHeight; // reflow so the start height is committed before transitioning
@@ -257,10 +278,7 @@ export class Card {
 		const c = this.comment;
 		this.el.empty();
 		this.el.toggleClass("is-resolved", c.status === "resolved");
-		// `expanded` (Show more) gets the same "stay visible / lifted" treatment as
-		// `open` (Reply) — both are non-resting states the narrow-mode visibility
-		// rules and hover-lift styling should apply to.
-		this.el.toggleClass("is-open", this.open || this.expanded);
+		this.el.toggleClass("is-open", this.open);
 
 		// A margin card floats right next to its highlighted text, so the anchor
 		// is always visible right there. A sidebar card has no such link (cb has
@@ -308,31 +326,32 @@ export class Card {
 		this.cb.onResize(); // clamping changes the card height → restack
 	}
 
-	/** Apply the collapse state to the DOM: clamp the body when a tall card is at
-	 *  rest, and render the "more" / Open-in-sidebar footer. No collapse button
-	 *  in either unclamped state — clicking outside the card is how you leave it
-	 *  (see onDocMouseDown / syncOutsideClickListener). */
+	/** Apply the fold state to the DOM: clamp the body when it should fold, and
+	 *  render the footer — "more" on a folded thread, "less" on a long one shown
+	 *  in full, or "Open in sidebar" when it's too tall for the column. */
 	private applyClampState(): void {
-		const unclamped = this.open || this.expanded;
-		this.clipEl?.toggleClass("dc-clamped", !!this.view.collapsible && !unclamped && this.overflows);
+		const clamped = this.isClamped();
+		this.clipEl?.toggleClass("dc-clamped", clamped);
 		const foot = this.footEl;
 		if (!foot) return;
 		foot.empty();
-		if (this.view.collapsible) {
+		if (this.view.collapsible && this.overflows && !this.open) {
 			if (this.tooTall && this.cb.openInSidebar) {
-				// Too tall to read in the margin at all (expanding gives an unreachable
-				// full-height card), so the affordance is "open in sidebar" directly — on
-				// the always-reachable collapsed card.
+				// Too tall to read in the margin at all (unfolding gives an unreachable
+				// full-height card), so the affordance is "open in sidebar" directly.
 				this.footButton(foot, "Open in sidebar →", "", () => this.cb.openInSidebar?.(this.id));
-			} else if (!unclamped && this.overflows) {
-				// "more" only unclamps the text — it must NOT also open the reply composer.
-				this.footButton(foot, "more", "", () => this.setExpanded(true));
+			} else if (clamped) {
+				// "more" only unfolds the text — it must NOT also open the reply composer.
+				this.footButton(foot, "more", "", () => this.setFold("unfolded"));
+			} else {
+				this.footButton(foot, "less", "", () => this.setFold("folded"));
 			}
 		}
 		// "more" sits inline at the bottom-right corner, over the faded-out end of
 		// the clamped text (Notion-style) rather than as a standalone row below it;
-		// "Open in sidebar" (unclamped or too-tall) is a normal centered footer.
-		foot.toggleClass("dc-foot-overlay", !!this.view.collapsible && !unclamped && this.overflows);
+		// "less" and "Open in sidebar" are a normal footer row.
+		foot.toggleClass("dc-foot-overlay", clamped);
+		foot.toggleClass("dc-foot-end", !clamped && foot.textContent === "less");
 		foot.toggleClass("is-empty", foot.childElementCount === 0);
 	}
 
@@ -359,12 +378,16 @@ export class Card {
 
 	private renderEntry(parent: HTMLElement, entry: CardEntry, i: number): void {
 		const row = parent.createDiv("dc-entry");
+		// Your own entries get your profile photo (painted from a body-level CSS
+		// variable — see ui/profile.ts) and follow the "Show my profile" switch.
+		row.toggleClass("is-mine", !!entry.author && entry.author === this.cb.getAuthor());
 
 		// Author/time on the left, action icons on the right — one row, like Notion's
 		// comments panel. (Margin cards still hide the icons until hover via CSS;
 		// the sidebar keeps them visible since there's room to spare.)
 		const head = row.createDiv("dc-entry__head");
 		const meta = head.createDiv("dc-entry__meta");
+		meta.createSpan({ cls: "dc-avatar" });
 		meta.createSpan({ cls: "dc-entry__author", text: entry.author || "—" });
 		const time = formatRelativeTime(entry.timestamp ?? (i === 0 ? this.comment.createdAt : undefined));
 		if (time) meta.createSpan({ cls: "dc-entry__time", text: time });

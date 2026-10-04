@@ -5,6 +5,11 @@ matching the pushed tag as that GitHub release's notes, so add an entry here bef
 
 ## Unreleased
 
+## 0.2.8
+
+- **Profile photo:** pick an image from your vault (or paste an image link) in settings, and it shows small and round next to your name on your own comments and replies. Turn off **Show my profile** to hide your name and photo on your comments.
+- **Long comments show in full** in the margin when there's room. A long comment folds to a "more" preview only when it would run into the next card (or is too tall for the window), or when you fold it yourself with the new **less** link. Your "more" / "less" choice stays until you click the other.
+
 ## 0.2.7
 
 - **iPad:** comment cards now show in the right margin on tablets, like on desktop. Only phones skip the margin and use the sidebar and a pop-up for new comments.
