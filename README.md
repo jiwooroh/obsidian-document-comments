@@ -170,7 +170,7 @@ Then enable **Notion-style Comments** in Community plugins.
 3. Write the comment in the margin composer.
 4. Press Enter to save the comment.
 
-Press Shift+Enter to add a line break. On mobile, use the dialog to save the comment.
+Press Shift+Enter to add a line break. On a phone, use the dialog to save the comment.
 
 ### Add an empty comment
 
@@ -180,7 +180,7 @@ Notion-style Comments disables empty comments by default.
 2. Enable **Allow empty comments**.
 3. Select text and run **Add comment**.
 4. Leave the comment field empty.
-5. Press Enter on desktop, or select **Empty comment** on mobile.
+5. Press Enter on desktop or tablet, or select **Empty comment** on a phone.
 
 The plugin highlights the selected text and shows a comment card. The card shows **Empty** until you add text.
 
@@ -234,13 +234,13 @@ Open **Settings → Notion-style Comments**. Set **Author** to the name that the
 
 The plugin uses `me` when the Author setting is empty.
 
-## Desktop and mobile behavior
+## Desktop, tablet, and phone behavior
 
-Desktop views show cards in a margin beside the note. The cards align with their selected text and avoid overlaps.
+Desktop and tablet (iPad) views show cards in a margin beside the note. The cards align with their selected text and avoid overlaps.
 
-Mobile views show the highlights without a margin. Use the sidebar to read and manage comments.
+Phone views show the highlights without a margin. Use the sidebar to read and manage comments there.
 
-Mobile uses a dialog for new comments. The stored comment format stays the same on all devices.
+Phones use a dialog for new comments. The stored comment format stays the same on all devices.
 
 ## Agent support
 

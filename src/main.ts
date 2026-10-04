@@ -76,15 +76,16 @@ export default class DocCommentsPlugin extends Plugin {
 				allowEmptyComments: () => this.settings.allowEmptyComments,
 				sidebarOpen: () => this.sidebarOpen,
 				openInSidebar: (id) => void this.revealComment(id),
-				isMobile: () => Platform.isMobile,
+				isMobile: () => Platform.isPhone,
 			}),
 			// Reflects dc-has / dc-highlights / dc-hide-resolved onto .cm-editor so the
 			// stylesheet caps the text column without a :has() selector.
 			editorLayoutField,
-			// The floating margin column needs horizontal room mobile doesn't have, so
+			// The floating margin column needs horizontal room a phone doesn't have, so
 			// there we skip it entirely — comments live in the sidebar, highlights stay,
-			// and new comments are composed in a modal (see startAddComment).
-			...(Platform.isMobile ? [] : [marginPlugin]),
+			// and new comments are composed in a modal (see startAddComment). Tablets
+			// (iPad) have the room, so they get the margin like desktop.
+			...(Platform.isPhone ? [] : [marginPlugin]),
 		]);
 
 		// Reading view: a separate render path. Highlights come from a post-processor;
@@ -97,7 +98,7 @@ export default class DocCommentsPlugin extends Plugin {
 			allowEmptyComments: () => this.settings.allowEmptyComments,
 			sidebarOpen: () => this.sidebarOpen,
 			openInSidebar: (id) => void this.revealComment(id),
-			isMobile: () => Platform.isMobile,
+			isMobile: () => Platform.isPhone,
 		};
 		this.readingManager = new ReadingMarginManager(readingDeps);
 		this.scheduleReadingRefresh = debounce(() => this.readingManager?.refresh(), 50, true);
@@ -214,7 +215,7 @@ export default class DocCommentsPlugin extends Plugin {
 		}
 		const doc = view.state.doc.toString();
 		const targetHighlightId = findHighlightAtSelection(doc, from, to)?.id;
-		if (Platform.isMobile) {
+		if (Platform.isPhone) {
 			// No floating margin composer on mobile — collect the text in a modal,
 			// then write through the same editor path so it's a single undo step.
 			const quote = view.state.doc.sliceString(from, to);
@@ -276,7 +277,7 @@ export default class DocCommentsPlugin extends Plugin {
 		const { from, to, expected } = sourceSelection;
 		const targetHighlightId = findHighlightAtSelection(data, from, to)?.id;
 		const emptyAction = targetHighlightId ? "remove" : this.settings.allowEmptyComments ? "highlight" : "none";
-		if (Platform.isMobile) {
+		if (Platform.isPhone) {
 			// No margin composer on mobile — write straight to the file from a modal,
 			// then refresh so the new highlight appears in the reading view.
 			const file = view.file;

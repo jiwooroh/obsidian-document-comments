@@ -5,6 +5,10 @@ matching the pushed tag as that GitHub release's notes, so add an entry here bef
 
 ## Unreleased
 
+## 0.2.7
+
+- **iPad:** comment cards now show in the right margin on tablets, like on desktop. Only phones skip the margin and use the sidebar and a pop-up for new comments.
+
 ## 0.2.6
 
 - **Show author names** setting: turn it off to hide who wrote each comment and reply, on comment cards and in highlight hover previews. On by default.
